@@ -1,5 +1,6 @@
 import socket, threading, hashlib, base64, select
 import color
+import json
 
 SOCKET_PORT = 9876
 
@@ -28,8 +29,7 @@ class WebSocketServer(threading.Thread):
                         lon=line[2]
                         alt=line[3]
                         rad=line[4]
-                        msg="""{"pano" : {"lat": "%F", lon:"%F", alt:"%F", rad:"%s"}}"""\
-                                    %(lat,lon,alt,rad)
+                        msg = json.dumps({"pano" : {"lat": lat, "lon":lon, alt:alt, rad:rad}}, sort_keys=True) 
                         self.panoramas.append(msg)
                     except Exception as e:
                         print(color.WARNING,"WebSocket : Line %i malformed : %s"%(index,e),color.ENDC)            
@@ -79,14 +79,14 @@ class WebSocketServer(threading.Thread):
         """
         notify the user of geographical position
         """
-        msg='{"pos":{"lat":%f, "long":%f, "alt":%f, "rad":"%s"}}'%(lat,lon,alt,rad.replace("°"," deg"))      
+        msg = json.dumps({"pos":{"lat":lat, "long":lon, "alt":alt, "rad":rad.replace("°"," deg")}}, sort_keys=True) 
         self.send2All(msg) 
 
     def setModeInfo(self,isAutoModeOn,dist):
         """
         notify the user of automode configuration
         """
-        msg="""{"config":{"auto":"%s","dist":"%i"}}"""%(str(isAutoModeOn),dist)
+        msg = json.dumps({"config":{"auto":str(isAutoModeOn),"dist":dist}}, sort_keys=True)
         self.send2All(msg)
 
     def newPanorama(self,succes=True,**kwargs):
@@ -98,17 +98,18 @@ class WebSocketServer(threading.Thread):
             lon = kwargs["longitude"]
             alt = kwargs["altitude"]
             rad = kwargs["heading"]
-            msg='{"pano" : {"lat": %f, "lon":%f, "alt":%f, "rad":"%s"}}'%(lat,lon,alt,rad)
+            msg = json.dumps({ "pano" : { "lat": lat, "lon":lon, "alt":alt, "rad":rad }}, sort_keys=True)
             self.send2All(msg)
         else:
-            msg='{"pano" : null}'
+            msg = json.dumps({"pano" : "null"}, sort_keys=True)
             self.send2All(msg)
 
     def notif(self,succes):
         """
         notify the user of a succes/fail in an action
         """
-        self.send2All("""{"succes":%s}"""%("true" if succes else "false"))
+        msg = json.dumps({"succes":True if succes else False}, sort_keys=True)
+        self.send2All(msg)
 
     def canMove(self):
         """
