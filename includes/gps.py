@@ -1,4 +1,3 @@
-# -*- coding: latin_1 -*-
 #Software under Creative Commons Licences By-Nc-Sa 3.0
 #Read the licence.txt file for further information
 import serial, time, math

@@ -252,8 +252,8 @@ class OpenStreetViewServer(threading.Thread):
         
 if __name__ == "__main__":
     os.system("clear")
+    server=OpenStreetViewServer()    
     try:
-        server=OpenStreetViewServer()    
         server.start()
         server.join()
     except KeyboardInterrupt:
