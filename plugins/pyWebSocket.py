@@ -75,7 +75,7 @@ class WebSocketServer(threading.Thread):
         """
         notify the user of geographical position
         """
-        msg='{"pos":{"lat":%f, "long":%f, "alt":%f "rad":"%s"}}'%(lat,lon,alt,rad.replace("°"," deg"))      
+        msg='{"pos":{"lat":%f, "long":%f, "alt":%f, "rad":"%s"}}'%(lat,lon,alt,rad.replace("°"," deg"))      
         self.send2All(msg) 
 
     def setModeInfo(self,isAutoModeOn,dist):
