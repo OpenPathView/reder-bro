@@ -22,15 +22,15 @@
                     
 
                     this.ws.onopen = function(e){
-                        console.log("WebSocket opened, event :");
-                        console.log(e);
+                        //console.log("WebSocket opened, event :");
+                        //console.log(e);
                         qs("#connectionInfos").style.display = "none";    
                         qs("#controles").style.display = null;    
                     };
 
                     this.ws.onerror = function(e){
-                        console.log("Error, event :");
-                        console.log(e);
+                        //console.log("Error, event :");
+                        //console.log(e);
                     };
 
                     window.onbeforeunload = function(){
@@ -39,8 +39,8 @@
                     };
 
                     this.ws.onclose = function(e){
-                        console.log("WebSocket closed, event :");
-                        console.log(e);
+                        //console.log("WebSocket closed, event :");
+                        //console.log(e);
                         qs("#connectionInfos").style.display = null;    
                         qs("#controles").style.display = "none";
                         this.close();
@@ -48,9 +48,9 @@
                     };
                     
                     this.ws.onmessage = function(e){
-                        console.log(e.data);
+                        //console.log(e.data);
                         var rep = JSON.parse(e.data);
-                        console.log(rep);
+                        //console.log(rep);
                 
                         if( rep.hasOwnProperty('pos') ){
                             qs("#lat").innerHTML="lat "+rep.pos.lat;
@@ -67,7 +67,7 @@
                             }
                         }
                         else if(rep.hasOwnProperty('pano')){
-                            console.log(rep);
+                            //console.log(rep);
                             // TODO : add map with panorama coordinates and user position
                             // '{"pano" : {"lat": "%F", lon:"%F", alt:"%F", rad:"%s"}}'
                         }
