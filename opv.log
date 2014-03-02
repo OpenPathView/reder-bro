@@ -60898,3 +60898,64 @@
 [02/03/2014 15:58'43s] [92mServer stopped [00m
 [02/03/2014 15:58'43s] [93mDestroying server and its component... [00m
 [02/03/2014 15:58'43s] [93mClosing Tee... [00m
+[02/03/2014 16:04'27s] [92mcontrolTerm server initialized [00m
+[02/03/2014 16:04'27s] [94mInitializing WebSocket server... [00m
+[02/03/2014 16:04'28s] [92mWebSocket server initialized [00m
+[02/03/2014 16:04'28s] [94mInitializing LiveView server... [00m
+[02/03/2014 16:04'28s] [92mLiveView server initialized [93mConnexion failed [00m
+[02/03/2014 16:04'28s] [94mInitializing AndroidServer server...[Errno 113] No route to host [00m [00m
+[02/03/2014 16:04'28s] 
+[02/03/2014 16:04'28s] [92mLiveView server initialized [00m
+[02/03/2014 16:04'29s] [92mMain server initialized [00m
+[02/03/2014 16:05'39s] Ctrl-C detected, you could have typed "stop",it would be less brutal...
+[02/03/2014 16:05'40s] [94mStopping server... [00m
+[02/03/2014 16:05'40s] [94mStopping GPS Thread... [00m
+[02/03/2014 16:05'41s] [92mGPS Thread stopped [00m
+[02/03/2014 16:05'41s] [94mStopping GoPro Thread... [00m
+[02/03/2014 16:05'41s] [92mGoPro Thread stopped [00m
+[02/03/2014 16:05'41s] [94mStopping controlTerm Thread... [00m
+[02/03/2014 16:05'41s] [92mcontrolTerm Thread stopped [00m
+[02/03/2014 16:05'41s] [94mStopping WebSocket Thread... [00m
+[02/03/2014 16:05'41s] [92mWebSocket Thread stopped [00m
+[02/03/2014 16:05'41s] [94mStopping LiveView Thread... [00m
+[02/03/2014 16:05'41s] [92mLiveView Thread stopped [00m
+[02/03/2014 16:05'41s] [94mStopping AndroidServer Thread... [00m
+[02/03/2014 16:05'41s] [92mAndroidServer Thread stopped [00m
+[02/03/2014 16:05'41s] [92mServer stopped [00m
+[02/03/2014 16:05'41s] [93mDestroying server and its component... [00m
+[02/03/2014 16:05'41s] [93mClosing Tee... [00m
+[02/03/2014 16:07'09s] [92mcontrolTerm server initialized [00m
+[02/03/2014 16:07'09s] [94mInitializing WebSocket server... [00m
+[02/03/2014 16:07'09s] [92mWebSocket server initialized [00m
+[02/03/2014 16:07'09s] [94mInitializing LiveView server... [00m
+[02/03/2014 16:07'09s] [92mLiveView server initialized [93mConnexion failed [00m
+[02/03/2014 16:07'09s] [94mInitializing AndroidServer server...[Errno 113] No route to host  [00m[00m
+[02/03/2014 16:07'10s] 
+[02/03/2014 16:07'10s] [92mLiveView server initialized [00m
+[02/03/2014 16:07'10s] [92mMain server initialized [00m
+[02/03/2014 16:07'16s] [94mTaking picture [00m
+[02/03/2014 16:07'18s] [91mGoPro failed to take photo [00m
+[02/03/2014 16:07'18s] GoPro 5 failed
+[02/03/2014 16:07'18s] GoPro 4 failed
+[02/03/2014 16:07'18s] GoPro 3 failed
+[02/03/2014 16:07'18s] GoPro 2 failed
+[02/03/2014 16:07'18s] GoPro 1 failed
+[02/03/2014 16:07'18s] GoPro 0 failed
+[02/03/2014 16:07'18s] [91mError, socket unavailable [00m
+[02/03/2014 16:07'38s] Ctrl-C detected, you could have typed "stop",it would be less brutal...
+[02/03/2014 16:07'40s] [94mStopping server... [00m
+[02/03/2014 16:07'40s] [94mStopping GPS Thread... [00m
+[02/03/2014 16:07'40s] [92mGPS Thread stopped [00m
+[02/03/2014 16:07'40s] [94mStopping GoPro Thread... [00m
+[02/03/2014 16:07'40s] [92mGoPro Thread stopped [00m
+[02/03/2014 16:07'40s] [94mStopping controlTerm Thread... [00m
+[02/03/2014 16:07'40s] [92mcontrolTerm Thread stopped [00m
+[02/03/2014 16:07'40s] [94mStopping WebSocket Thread... [00m
+[02/03/2014 16:07'40s] [92mWebSocket Thread stopped [00m
+[02/03/2014 16:07'40s] [94mStopping LiveView Thread... [00m
+[02/03/2014 16:07'40s] [92mLiveView Thread stopped [00m
+[02/03/2014 16:07'40s] [94mStopping AndroidServer Thread... [00m
+[02/03/2014 16:07'40s] [92mAndroidServer Thread stopped [00m
+[02/03/2014 16:07'40s] [92mServer stopped [00m
+[02/03/2014 16:07'40s] [93mDestroying server and its component... [00m
+[02/03/2014 16:07'40s] [93mClosing Tee... [00m

@@ -183,7 +183,7 @@ class ControlTerm(threading.Thread):
         """
         handle given command
         """
-        command = command.split(" ")
+        command = command.lower().split(" ")
         if len(command)==0:
             print("I can't read in your mind, you know that ?")
         else:
@@ -199,14 +199,14 @@ class ControlTerm(threading.Thread):
                 print(color.WARNING+"ping",color.ENDC)
                 print(color.FAIL+"ping",color.ENDC)
                 print(color.ENDC+"ping",color.ENDC)
-            elif cmd == "geoInfo":
+            elif cmd == "geoinfo":
                 print("lat :",self.lat,"lon :",self.lon,"alt :",self.alt,"compas :",self.rad)
-            elif cmd == "turnOff":
+            elif cmd == "turnoff":
                 if self.osvServer:
                     self.osvServer.turnOff()
                 else:
                     print("Turn off")
-            elif cmd == "turnOn":
+            elif cmd == "turnon":
                 if self.osvServer:
                     self.osvServer.turnOn()
                 else:
