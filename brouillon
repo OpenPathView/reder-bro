@@ -1,0 +1,19 @@
+canMove
+stop
+setGeoInfo(lat,lon,alt,rad)
+setModeInfo (isAutoModeOn,dist)
+notif(succes)
+newPanorama(succes = True,**kwargs) kwargs = failed camera OR latitude,longitude,altitude,heading
+
+
+
+statut (resultat de prise de vue)
+information panorama ??
+
+
+
+
+
+
+-------------------TODO-------------------
+add a methode on GPS to calculate distance

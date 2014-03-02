@@ -1,0 +1,19 @@
+{
+    "EyeFiServer":{
+
+        "host_name":"",
+        "host_port":59278,
+        "upload_dir":"./pictures/"
+    },
+    "UploadKeys":{
+        "00185650541d":"9510fffb6bd8eb0bf44bd5a4f8ec22fe",
+        "0018562f7703":"08aacd86be8e73dfabb4b33400219bf8",
+        "0018562f7535":"6a8796bf10aa235f431f41a96647f45a",
+        "0018562e7420":"17aa1242ef44c569d9eac33e3a6ea009",
+        "0018562f7352":"1607ecd67dc9fe436c4222d74a33ab94",
+        "0018562e7395":"cd3bce559bd150c39428ce0438b853e9",
+        "0018562f7998":"7afad0f2f3d119935bc48e92463419f0"
+    }
+}
+
+
