@@ -8,14 +8,31 @@ class WebSocketServer(threading.Thread):
     A server receiving connection for websocket
     """
     
-    def __init__(self,receiveHandler=None):
+    def __init__(self,opvServer=None):
         """
         init the WebSocket Server, receiveHandler, if given, is called when a socket receive data with socket as first parameter and msg as second one
         """
         print(color.OKBLUE+"Initializing WebSocket server...",color.ENDC)
         threading.Thread.__init__(self)
+        self.opvServer = opvServer
         self.daemon = True
-        self.receiveHandler=receiveHandler
+        self.receiveHandler=self.opvServer.socketHandler if self.opvServer else None
+        self.panoramas = []   #keep all taken panorama so that we can keep track when opening a new page
+        try:
+            with open("picturesInfo") as picFile:
+                for i in picFile.readlines():
+                    i=i.split(";")                    
+                    lat=i[1]
+                    lon=i[2]
+                    alt=i[3]
+                    rad=i[4]
+                    msg="""{"pano" : {"lat": "%F", lon:"%F", alt:"%F", rad:"%s"}}"""\
+                                %(lat,lon,alt,rad)
+                    self.panoramas.append(msg)
+        except Exception:
+            print(color.WARNING,"File not found or malformed file",color.ENDC)
+
+
         self.__webSock = socket.socket()
         self.__webSock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.__webSock.bind(('', SOCKET_PORT))
@@ -49,7 +66,10 @@ class WebSocketServer(threading.Thread):
             readable, writable, errors = select.select([self.__webSock],[],[])
             if readable == [self.__webSock]:
                 conn, address = self.__webSock.accept()
-                self.client.append(WebSocketClient(conn, address, self.receiveHandler))
+                newClient = WebSocketClient(conn, address, self.receiveHandler)
+                self.client.append(newClient)
+                for p in self.panoramas:
+                    newClient.send(p)
                     
     def setGeoInfo(self,lat,lon,alt,rad):
         """
@@ -74,7 +94,7 @@ class WebSocketServer(threading.Thread):
             lon = kwargs["longitude"]
             alt = kwargs["altitude"]
             rad = kwargs["heading"]
-            msg="""{"pano" : {"lat": "%F", lon:"%F", alt:"%F", rad:"%s", pic:"%s" }}"""%(lat,lon,alt,rad,"/home/pi/OpenStreetViewEyeFi/eyefi/pictures")
+            msg="""{"pano" : {"lat": "%F", lon:"%F", alt:"%F", rad:"%s"}}"""%(lat,lon,alt,rad)
             self.send2All(msg)
 
     def notif(self,succes):

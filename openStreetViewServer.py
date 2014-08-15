@@ -3,17 +3,17 @@
 import threading, time
 import os
 import sys
-from math import sin, cos, acos, radians
 
 sys.path.append(os.path.realpath(__file__)[:os.path.realpath(__file__).rfind("/")]+"/includes")
 sys.path.append(os.path.realpath(__file__)[:os.path.realpath(__file__).rfind("/")]+"/includes/quick2wire-python-api/")
 
-import gps, goPro, compas, pyWebSocket, LiveViewServer, color, controlTerm, androidServer
+import gps, goPro, compas, color
+from plugins import Manager
+
+# pyWebSocket, LiveViewServer, controlTerm
 
 socketport=9876
 EARTH_RADIUS = 6367.445 #found on da internet m
-
-
 
 
 class OpenStreetViewServer(threading.Thread):
@@ -46,12 +46,7 @@ class OpenStreetViewServer(threading.Thread):
         self.compas = compas.Compas()           
         self.gopro = goPro.GoPro(self)    
 
-        self.interfaces = []
-
-        self.interfaces.append(controlTerm.ControlTerm(self))
-        self.interfaces.append(pyWebSocket.WebSocketServer(receiveHandler=self.webSocketHandler))
-        self.interfaces.append(LiveViewServer.LiveViewServer(self))        
-        self.interfaces.append(androidServer.AndroidServer(self))
+        self.interfaces = Manager(self)
 
         self.geoInfoUpdateThread = threading.Thread(target = self.sendGeoInfoUpdateThread)
         self.geoInfoUpdateThread.daemon = True
@@ -83,11 +78,9 @@ class OpenStreetViewServer(threading.Thread):
         print(color.OKBLUE+"Turning GoPro on",color.ENDC)
         if self.configOnOffLock.acquire(blocking=False):#if the Lock is unlocked
             if self.gopro.turnOn():
-                for interface in self.interfaces:
-                    interface.notif(True)
+                self.interfaces.notif(True)
             else:
-                for interface in self.interfaces:
-                    interface.notif(False)
+                self.interfaces.notif(False)
             self.configOnOffLock.release()
             return
         else:
@@ -100,11 +93,9 @@ class OpenStreetViewServer(threading.Thread):
         print(color.OKBLUE+"Turning GoPro off",color.ENDC)
         if self.configOnOffLock.acquire(blocking=False):#if the Lock is unlocked
             if self.gopro.turnOff():
-                for interface in self.interfaces:
-                    interface.notif(True)
+                self.interfaces.notif(True)
             else:
-                for interface in self.interfaces:
-                    interface.notif(False)
+                self.interfaces.notif(False)
             self.configOnOffLock.release()
         else:
             return
@@ -136,19 +127,16 @@ class OpenStreetViewServer(threading.Thread):
         lat,lon = self.gps.getDegCoord()
         alt = self.gps.getAltitude()
         if succes:            
-            for interface in self.interfaces:
-                interface.newPanorama(True,latitude=lat,longitude=lon,altitude=alt,heading=rad)
+            self.interfaces.newPanorama(True,latitude=lat,longitude=lon,altitude=alt,heading=rad)
         else:
-            for interface in self.interfaces:
-                interface.newPanorama(False,goProFailed = goProFailed)
+            self.interfaces.newPanorama(False,goProFailed = goProFailed)
         os.system("""echo "%s; %f; %f; %s; %s; %s" >> picturesInfo.csv"""%(time.asctime(),lat,lon, alt, rad, goProFailed))    
 
     def canMove(self):
         """
         tell all the interfaces the user can move
         """
-        for interface in self.interfaces:
-                interface.canMove()
+        self.interfaces.canMove()
 
     def __automodeThread(self):
         """
@@ -196,20 +184,19 @@ class OpenStreetViewServer(threading.Thread):
             self.autoMode.clear()
         self.configAutoModeLock.release()                
     
-    def webSocketHandler(self,socketSource,msg):
+    def socketHandler(self,socketSource,msg):
         """
-        will be called by websocket when they receiving a message
+        will be called by socket when they receiving a message
         """
-        # TODO: replace
+        # TODO: complete
    
     def sendGeoInfoUpdateThread(self):
         """
-        keep webSocket up to date with geolocalisation info
+        keep interfaces up to date with geolocalisation info
         """        
         while self.keepAlive.isSet():
             lat,lon,alt,rad = self.getLatLonAltRad()
-            for interface in self.interfaces:
-                interface.setGeoInfo(lat,lon,alt,rad)
+            self.interfaces.setGeoInfo(lat,lon,alt,rad)
             time.sleep(1)
             
     def getLatLonAltRad(self):
@@ -224,8 +211,7 @@ class OpenStreetViewServer(threading.Thread):
         """
         send config info to all connected devices
         """
-        for interface in self.interfaces:
-            interface.setModeInfo(self.isAutoMode(),self.distPhoto)
+        self.interfaces.setModeInfo(self.isAutoMode(),self.distPhoto)
 
     def stop(self):
         """
@@ -234,8 +220,7 @@ class OpenStreetViewServer(threading.Thread):
         print(color.OKBLUE+"Stopping server...",color.ENDC)
         self.gps.stop()
         self.gopro.stop()
-        for interface in self.interfaces:
-            interface.stop()
+        self.interfaces.stop()
         self.keepAlive.clear()
         print(color.OKGREEN+"Server stopped",color.ENDC)
 
