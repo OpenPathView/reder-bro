@@ -101,7 +101,7 @@ class WebSocketServer(threading.Thread):
         """
         notify the user of a succes/fail in an action
         """
-        pass
+        self.send2All("""{"succes":%s}"""%("true" if succes else "false"))
 
     def canMove(self):
         """

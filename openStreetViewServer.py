@@ -3,6 +3,7 @@
 import threading, time
 import os
 import sys
+import json
 
 sys.path.append(os.path.realpath(__file__)[:os.path.realpath(__file__).rfind("/")]+"/includes")
 sys.path.append(os.path.realpath(__file__)[:os.path.realpath(__file__).rfind("/")]+"/includes/quick2wire-python-api/")
@@ -188,7 +189,31 @@ class OpenStreetViewServer(threading.Thread):
         """
         will be called by socket when they receiving a message
         """
-        # TODO: complete
+        try:
+            msg = json.loads(msg)
+        except ValueError:
+            print(color.FAIL,"Error decoding json from socket",color.ENDC)
+            return
+        if "action" in msg:
+            if msg["action"]=="takepic":
+                self.takePic()
+            elif msg["action"]=="turnon":
+                self.turnOn()
+            elif msg["action"]=="turnoff":
+                self.turnOff()
+            else:
+                print(color.WARNING,"WARNING : no correct action found in socket json",color.ENDC)
+        if "set" in msg:
+            if msg["set"]=="automode":
+                try:
+                    if msg["dist"]:
+                        self.setAuto(msg["dist"])
+                    else:
+                        self.setAuto()
+                except KeyError:
+                    print(color.FAIL,"Error : automode configuration fail",color.ENDC)
+            else:
+                print(color.WARNING,"WARNING : no correct setting field found in socket json",color.ENDC)
    
     def sendGeoInfoUpdateThread(self):
         """
