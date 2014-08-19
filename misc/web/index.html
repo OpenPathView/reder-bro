@@ -1,81 +1,143 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>WebSocket test</title>
-    <script type="text/javascript">
+    <head>
+        <title>OPV Mobile Controler</title>
+        
+        <script type="text/javascript">
 
-        var qs = function(s){
-            return document.querySelector(s);
-        };
+            var qs = function(s){
+                return document.querySelector(s);
+            };
 
-        var ws = new function(){
-            this.ws = null;
-            this.openSocket = function(){
-                this.ws = new WebSocket(qs("#ws_url").value, "protocolOne");
-                this.ws.onopen = function(e){
-                    console.log("WebSocket opened, event :");
-                    console.log(e);
-                };
-                var that = this;
-                window.onbeforeunload = function(){
-                    that.close();
-                    alert("close");
-                };
-                this.ws.onmessage = function(e){
-                    var rep = JSON.parse(e.data);
-                    console.log( rep );
-            
-                    if( rep.hasOwnProperty('error') ){
-                        switch(rep.error){
-                            case 0:
-                                alert("Pb de pseudo");
-                            break;
-                            case 1:
-                                alert("erreur 1");
-                            case 2:
-                            default:
-                                alert("Autre erreur");
+            var ws = new function(){
+                this.ws = null;
+
+                this.openSocket = function(){
+
+                    this.ws = new WebSocket(qs("#ws_url").value, "protocolOne");
+                    
+
+                    this.ws.onopen = function(e){
+                        console.log("WebSocket opened, event :");
+                        console.log(e);
+                        qs("#connectionInfos").style.display = "none";    
+                        qs("#controles").style.display = null;    
+                    };
+
+                    window.onbeforeunload = function(){
+                        this.close();
+                        alert("WebSocket connexion closed");
+                    };
+
+                    this.ws.onclose = function(e){
+                        console.log("WebSocket closed, event :");
+                        console.log(e);
+                        qs("#connectionInfos").style.display = null;    
+                        qs("#controles").style.display = "none";
+                        this.close();
+                        alert("WebSocket connexion closed");
+                    };
+                    
+                    this.ws.onmessage = function(e){
+                        var rep = JSON.parse(e.data);
+                        console.log(rep);
+                
+                        if( rep.hasOwnProperty('pos') ){
+                            qs("#lat").innerHTML="lat"+rep.lat;
+                            qs("#long").innerHTML="long"+rep.long;
+                            qs("#alt").innerHTML="alt"+rep.alt;
+                            qs("#rad").innerHTML="rad"+rep.rad;
                         }
-                        return;
-                    }
-            
-                    if( rep.status == "login"){
-                        qs("#status").innerHTML="Connecté";
-                    }
+                        else if(rep.hasOwnProperty('config')){
+                            if (rep.auto == "True"){
+                                qs("#mode").value = rep.dist                                
+                            }
+                            else{
+                                qs("#mode").value = 0
+                            }
+                        }
+                        else if(rep.hasOwnProperty('pano')){
+                            // TODO : add map with panorama coordinates and user position
+                            // '{"pano" : {"lat": "%F", lon:"%F", alt:"%F", rad:"%s"}}'
+                        }
+                        else if(rep.hasOwnProperty('succes')){
+                            if(rep.succes=="false"){
+                                alert("echec du serveur")
+                            }
+                        }
+
+                    };
                 };
-            };
-            this.login = function(){
-                var data = { username: qs("#pseudo").value+","+qs("#couleur").value};
-                console.log(data);
-                this.ws.send( JSON.stringify(data) );
-            };
-            this.msg = function(){
-                var data = { msg: qs("#msg").value };
-                console.log(data);
-                this.ws.send( JSON.stringify(data) );
-            };
-            this.close = function(){
-                this.ws.close();
-            };
-        }();
-    
-    </script>
-</head>
 
-<body>
+                this.setAutoMode = function(){
+                    selectedDist = qs("#mode").value
+                    var data = { set: "automode", dist: selectedDist};
+                    this.ws.send( JSON.stringify(data) );            
+                };
+                
+                this.turnOn = function(){
+                    var data = { action: "turnon" };
+                    this.ws.send( JSON.stringify(data) );                
+                };
 
-    <label>URL du ws : <input type="text" id="ws_url" value="ws://localhost:9876/"></label>
-    <button onclick="ws.openSocket()">Open connexion</button><br>
-    <label>Pseudo : <input type="text" id="pseudo"></label>
-    <label>Couleur : <input type="text" id="couleur"></label>
-    <button onclick="ws.login()">Définir le pseudo</button>
+                this.turnOff = function(){
+                    var data = { action: "turnoff" };
+                    this.ws.send( JSON.stringify(data) );                
+                };
 
-    <br><br>
-    <label>Message : <input type="text" id="msg"></label>
-    <button onclick="ws.msg()">Message</button>
+                this.takePic = function(){
+                    var data = { action: "takepic" };
+                    this.ws.send( JSON.stringify(data) );                
+                };
 
-    <br><br>
-    <span id="status"></span>
+            }();
+        
+        </script>
+    </head>
 
-</body>
+    <body>
+        <div id="connectionInfos">
+            <label>URL de connection : <input type="text" id="ws_url" value="ws://192.168.0.42:9876/"></label>
+            <button onclick="ws.openSocket()">Connect</button><br>
+        </div>
+
+        <div id="controles" style="display:none;">
+            <div id="geoInfos">
+                <p id="lat"></p>
+                <p id="lon"></p>
+                <p id="alt"></p>
+                <p id="rad"></p>
+            </div>
+
+            <div id="settings">
+                <p>Mode : 
+                    <select id="mode" onchange="ws.setAutoMode()">
+                        <option value = "0">0ff</option>
+                        <option value = "5">5</option>
+                        <option value = "10">10</option>
+                        <option value = "15">15</option>
+                        <option value = "20">20</option>
+                        <option value = "30">30</option>
+                        <option value = "35">35</option>
+                        <option value = "30">30</option>
+                        <option value = "35">35</option>                
+                        <option value = "40">40</option>
+                        <option value = "45">45</option>
+                        <option value = "50">50</option>
+                    </select>
+                </p>
+            </div>
+
+            <div id="buttons">
+                <button type="button" onclick="ws.turnOn()">Turn On</button>
+                <button type="button" onclick="ws.turnOff()">Turn Off</button>
+                <button type="button" onclick="ws.takePic()">Take picture</button>
+            </div>
+
+            <div id="map">
+                <!-- Nothing here for now -->
+            </div>
+        </div>
+
+    </body>
 </html>
