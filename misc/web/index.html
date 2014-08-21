@@ -47,10 +47,10 @@
                         console.log(rep);
                 
                         if( rep.hasOwnProperty('pos') ){
-                            qs("#lat").innerHTML="lat"+rep.lat;
-                            qs("#long").innerHTML="long"+rep.long;
-                            qs("#alt").innerHTML="alt"+rep.alt;
-                            qs("#rad").innerHTML="rad"+rep.rad;
+                            qs("#lat").innerHTML="lat"+rep.pos.lat;
+                            qs("#lon").innerHTML="long"+rep.pos.long;
+                            qs("#alt").innerHTML="alt"+rep.pos.alt;
+                            qs("#rad").innerHTML="rad"+rep.pos.rad;
                         }
                         else if(rep.hasOwnProperty('config')){
                             if (rep.auto == "True"){
