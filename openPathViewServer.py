@@ -208,7 +208,7 @@ class OpenPathViewServer(threading.Thread):
             if msg["set"]=="automode":
                 try:
                     if msg["dist"]:
-                        self.setAuto(msg["dist"])
+                        self.setAuto(int(msg["dist"]))
                     else:
                         self.setAuto()
                 except KeyError:

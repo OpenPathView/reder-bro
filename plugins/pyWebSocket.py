@@ -20,18 +20,19 @@ class WebSocketServer(threading.Thread):
         self.panoramas = []   #keep all taken panorama so that we can keep track when opening a new page
         try:
             with open("picturesInfo.csv") as picFile:
-                for i in picFile.readlines():
+                picFile.readline()
+                for index,line in enumerate(picFile.readlines()):
                     try:
-                        i=i.split(";")                    
-                        lat=i[1]
-                        lon=i[2]
-                        alt=i[3]
-                        rad=i[4]
+                        line=line.split(";")                    
+                        lat=line[1]
+                        lon=line[2]
+                        alt=line[3]
+                        rad=line[4]
                         msg="""{"pano" : {"lat": "%F", lon:"%F", alt:"%F", rad:"%s"}}"""\
                                     %(lat,lon,alt,rad)
                         self.panoramas.append(msg)
-                    except Exception:
-                        print(color.WARNING,"Line malformed",color.ENDC)            
+                    except Exception as e:
+                        print(color.WARNING,"Line %i malformed : %s"%(index,e),color.ENDC)            
         except Exception:
             print(color.WARNING,"File not found or malformed file",color.ENDC)
 

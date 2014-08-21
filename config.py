@@ -30,7 +30,7 @@ class Config(object):
 
         print("Loaded the following settings : ")
         for k,v in self.settings.items():
-            print("\t%s"%(k))
+            print("\t%s = %s"%(k,v))
             self.settings[k] = literal_eval(v)
         print(color.OKGREEN+"Configuration loaded",color.ENDC)
 

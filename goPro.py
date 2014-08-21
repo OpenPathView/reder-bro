@@ -18,6 +18,7 @@ class GoPro(threading.Thread):
         """
         init serial port
         """
+        self.opvServer = opvServer
         print(color.OKBLUE+"Initializing GoPro server...",color.ENDC)
         threading.Thread.__init__(self)
         self.daemon = True

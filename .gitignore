@@ -1,4 +1,7 @@
+# OPV files : 
 
+picturesInfo.csv
+misc/venv/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
