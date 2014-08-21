@@ -3,6 +3,10 @@
     <head>
         <title>OPV Mobile Controler</title>
         
+
+        <link rel="stylesheet" href="static/leaflet.css" />
+        <script src="static/leaflet.js"></script>
+
         <script type="text/javascript">
 
             var qs = function(s){
@@ -134,10 +138,24 @@
                 <button type="button" onclick="ws.takePic()">Take picture</button>
             </div>
 
-            <div id="map">
-                <!-- Nothing here for now -->
+            <div id="map" style="height: 500px;">
+                <!-- Will contain the map -->
             </div>
         </div>
+        <script type="text/javascript">
+            var map = L.map('map').setView([48.41416, -4.47197], 13);
+            L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© <a href="http://openstreetmap.org">OpenStreetMap</a> contributors',
+                maxZoom: 18
+            }).addTo(map);
+            map.attributionControl.setPrefix(''); // Don't show the 'Powered by Leaflet' text. Attribution overload
+
+/*            L.tileLayer('http://{s}.tiles.mapbox.com/v3/MapID/{z}/{x}/{y}.png', {
+                attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
+                maxZoom: 18
+                }).addTo(map);*/
+        </script>
+
 
     </body>
 </html>

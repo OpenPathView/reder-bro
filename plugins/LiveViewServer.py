@@ -49,16 +49,13 @@ class LiveViewServer(threading.Thread):
     manageLiveView connexion and actions
     """
     
-    def __init__(self,osvServer=None,debug = False):
+    def __init__(self,opvServer=None):
         """
         init the server, loading needed componant
         """
         print(color.OKBLUE+"Initializing LiveView server...",color.ENDC)
         threading.Thread.__init__(self)
-        self.daemon = True
-        self.debug = debug
-
-
+        self.daemon = True        
  
         self.lat = 0
         self.lon = 0
@@ -86,10 +83,10 @@ class LiveViewServer(threading.Thread):
 
         self.clientSocket = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
         
-        self.osvServer=osvServer
-        if self.osvServer:
-            self.autoModeOn = self.osvServer.isAutoMode()
-            self.autoModeDist = self.osvServer.distPhoto
+        self.opvServer=opvServer
+        if self.opvServer:
+            self.autoModeOn = self.opvServer.isAutoMode()
+            self.autoModeDist = self.opvServer.distPhoto
         else:
             self.autoModeOn = False
             self.autoModeDist = 0
@@ -106,13 +103,13 @@ class LiveViewServer(threading.Thread):
             
     def setAutoModeConf(self):
         """
-        set the autoMode configuration in the osvServer if given
+        set the autoMode configuration in the opvServer if given
         """
-        if self.osvServer:
-            self.osvServer.setAuto(frequMetre=self.autoModeDist)
+        if self.opvServer:
+            self.opvServer.setAuto(frequMetre=self.autoModeDist)
             if self.autoModeOn == False:
-                self.osvServer.setAuto() #disable automode
-            self.osvServer.updateAllConfigInfo()
+                self.opvServer.setAuto() #disable automode
+            self.opvServer.updateAllConfigInfo()
         else:
             print("Setting auto mode conf :",self.autoModeDist,"AutoMode :","On" if self.autoModeOn else "Off")
                         
@@ -214,7 +211,7 @@ class LiveViewServer(threading.Thread):
         lastFail = None
         while self.keepAlive.isSet():        
             try:                    #Try to connect the watch
-                if not self.debug:
+                if not self.opvServer.config.get("FAKE_MODE"):
                     self.connect()
                 else:
                     time.sleep(1)                
@@ -290,18 +287,18 @@ class LiveViewServer(threading.Thread):
                                         print(color.OKBLUE+"auto mode unset",color.ENDC)                            
                             if msg.wasInAlert == False:
                                 if msg.menuItemId == MANU_MENU_ID:
-                                    if self.osvServer:
-                                        self.osvServer.takePic()
+                                    if self.opvServer:
+                                        self.opvServer.takePic()
                                     else:
                                         print("Take pic")
                                 elif msg.menuItemId == ON_MENU_ID:
-                                    if self.osvServer:
-                                        self.osvServer.turnOn()
+                                    if self.opvServer:
+                                        self.opvServer.turnOn()
                                     else:
                                         print("Turn on")
                                 elif msg.menuItemId == OFF_MENU_ID:
-                                    if self.osvServer:
-                                        self.osvServer.turnOff()
+                                    if self.opvServer:
+                                        self.opvServer.turnOff()
                                     else:
                                         print("Turn off")                                    
                             self.clientSocket.send(LiveViewMessages.EncodeNavigationResponse(LiveViewMessages.RESULT_EXIT))                                        

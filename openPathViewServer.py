@@ -8,16 +8,14 @@ import json
 sys.path.append(os.path.realpath(__file__)[:os.path.realpath(__file__).rfind("/")]+"/includes")
 sys.path.append(os.path.realpath(__file__)[:os.path.realpath(__file__).rfind("/")]+"/includes/quick2wire-python-api/")
 
-import gps, goPro, compas, color
+import gps, goPro, compas, color, config
 from plugins import Manager
-
-# pyWebSocket, LiveViewServer, controlTerm
 
 socketport=9876
 EARTH_RADIUS = 6367.445 #found on da internet m
 
 
-class OpenStreetViewServer(threading.Thread):
+class OpenPathViewServer(threading.Thread):
     """
     main class of the project, manage the whole thing
     """
@@ -30,8 +28,9 @@ class OpenStreetViewServer(threading.Thread):
         threading.Thread.__init__(self)
         self.keepAlive = threading.Event()
         self.keepAlive.set()
-        
-        if not os.path.isfile("picturesInfo"):
+        self.config = config.Config()
+
+        if not os.path.isfile("picturesInfo.csv"):
             os.system("""echo "time; lat; lon; alt; rad; goProFailed" >> picturesInfo.csv""")    
 
 
@@ -41,10 +40,12 @@ class OpenStreetViewServer(threading.Thread):
         
         self.configOnOffLock = threading.Lock()
 
-        self.gps = gps.Gps("/dev/ttyAMA0",baudrate=115200)
+
+
+        self.gps = gps.Gps(self,"/dev/ttyAMA0",baudrate=115200)
         self.lastLatLon = self.gps.getDegCoord()
         
-        self.compas = compas.Compas()           
+        self.compas = compas.Compas(self)           
         self.gopro = goPro.GoPro(self)    
 
         self.interfaces = Manager(self)
@@ -262,7 +263,7 @@ class OpenStreetViewServer(threading.Thread):
         
 if __name__ == "__main__":
     os.system("clear")
-    server=OpenStreetViewServer()    
+    server=OpenPathViewServer()    
     try:
         server.start()
         server.join()

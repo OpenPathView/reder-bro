@@ -19,16 +19,19 @@ class WebSocketServer(threading.Thread):
         self.receiveHandler=self.opvServer.socketHandler if self.opvServer else None
         self.panoramas = []   #keep all taken panorama so that we can keep track when opening a new page
         try:
-            with open("picturesInfo") as picFile:
+            with open("picturesInfo.csv") as picFile:
                 for i in picFile.readlines():
-                    i=i.split(";")                    
-                    lat=i[1]
-                    lon=i[2]
-                    alt=i[3]
-                    rad=i[4]
-                    msg="""{"pano" : {"lat": "%F", lon:"%F", alt:"%F", rad:"%s"}}"""\
-                                %(lat,lon,alt,rad)
-                    self.panoramas.append(msg)
+                    try:
+                        i=i.split(";")                    
+                        lat=i[1]
+                        lon=i[2]
+                        alt=i[3]
+                        rad=i[4]
+                        msg="""{"pano" : {"lat": "%F", lon:"%F", alt:"%F", rad:"%s"}}"""\
+                                    %(lat,lon,alt,rad)
+                        self.panoramas.append(msg)
+                    except Exception:
+                        print(color.WARNING,"Line malformed",color.ENDC)            
         except Exception:
             print(color.WARNING,"File not found or malformed file",color.ENDC)
 

@@ -15,7 +15,7 @@ class Gps(object):
     a class to manage serial connected gps
     """
     
-    def __init__(self,port=None, baudrate=115200, timeout=1, debug=False):       # ---------------------------------------------- DEBUG MODE !!!
+    def __init__(self,opvServer=None,port=None, baudrate=115200, timeout=1):
         """
         init the gps, if all needed information are provided, will connect the serial
         """
@@ -23,6 +23,8 @@ class Gps(object):
         assert type(baudrate) is int
         assert type(timeout) in (float,int)
         assert (type(port) in (str,int) or port == None)
+
+        self.opvServer=opvServer
         self.sat = None
         self.lat = None
         self.lon = None
@@ -38,15 +40,14 @@ class Gps(object):
         self.timeout = timeout
         self.readTimeout = 1
         self.data = None
-        self.debug = debug
         self.__updateThread = None
-        if port!=None and not self.debug:
+        if port!=None and not self.opvServer.config.get("FAKE_MODE"):
             self.connect()
         else:
             self.ser = None
         self.__dataLoop = True
         print(color.OKGREEN+"GPS initialized",color.ENDC)
-        if self.debug:
+        if self.opvServer.config.get("FAKE_MODE"):
             self.__updateData()
 	            
     def __del__(self):#ensure that the serial port is closed
@@ -63,7 +64,7 @@ class Gps(object):
         connect the gps
         """
         
-        if self.debug:#a debug option to be able to work even without gps
+        if self.opvServer.config.get("FAKE_MODE"):
             return
         try:
                 self.ser = serial.Serial(port=self.port,
@@ -85,7 +86,7 @@ class Gps(object):
         check if the gps is connected
         """
         
-        if self.debug:#check if the GPS is connected
+        if self.opvServer.config.get("FAKE_MODE"):#check if the GPS is connected
             return True
         elif self.ser != None:
             return self.ser.isOpen() and self.__dataLoop
@@ -95,7 +96,7 @@ class Gps(object):
         disconnect the gps
         """
         
-        if self.ser != None and not self.debug:
+        if self.ser != None and not self.opvServer.config.get("FAKE_MODE"):
             self.__dataLoop = False
             self.ser.close()
             
@@ -112,7 +113,7 @@ class Gps(object):
         a loop to update data
         """
         
-        if self.debug:#a debug option to be able to work even without gps
+        if self.opvServer.config.get("FAKE_MODE"):
             self.sat = 7
             self.lat = "4821.5588333N"
             self.lon = "434.1788333W"
@@ -149,6 +150,8 @@ class Gps(object):
                     data = data.split(",")
                     
                     if data[0]=="$GPGGA" and len(data) >= 10:#If the object contain the right data
+                        if self.opvServer.config.get("GPS_DEBUG"):
+                            print(data)
                         #$GPGGA,<time>,<lat>,<N/S>,<lon>,<E/W>,<positionnement type>,<satelite number>,<HDOP>,<alt>,<other thing>
                         self.data = data
                         self.sat = self.data[7]

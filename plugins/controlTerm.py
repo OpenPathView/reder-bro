@@ -11,14 +11,14 @@ class ControlTerm(threading.Thread):
     a control terminal to display information and let the user type in command
     """
 
-    def __init__(self,osvServer=None,debug = False):
+    def __init__(self,opvServer=None):
         """
         init the term
         """
         print(color.OKBLUE+"Initializing controlTerm server...",color.ENDC)
         threading.Thread.__init__(self)
         self.daemon = True
-        self.osvServer = osvServer
+        self.opvServer = opvServer
 
         self.lat = 0
         self.lon = 0
@@ -108,7 +108,7 @@ class ControlTerm(threading.Thread):
 
     def run(self):
         """
-        main loop, get keyboard event and communicate with the osvServer
+        main loop, get keyboard event and communicate with the opvServer
         """
         self.keepAlive.set()        
         history = [""]       # history while be 50 element long
@@ -189,7 +189,7 @@ class ControlTerm(threading.Thread):
         else:
             cmd = command[0]            
             if cmd == "quit":
-                self.osvServer.stop()
+                self.opvServer.stop()
             elif cmd == "clear":
                 self.dispArea.clear()
                 self.dispArea.refresh()
@@ -202,18 +202,18 @@ class ControlTerm(threading.Thread):
             elif cmd == "geoinfo":
                 print("lat :",self.lat,"lon :",self.lon,"alt :",self.alt,"compas :",self.rad)
             elif cmd == "turnoff":
-                if self.osvServer:
-                    self.osvServer.turnOff()
+                if self.opvServer:
+                    self.opvServer.turnOff()
                 else:
                     print("Turn off")
             elif cmd == "turnon":
-                if self.osvServer:
-                    self.osvServer.turnOn()
+                if self.opvServer:
+                    self.opvServer.turnOn()
                 else:
                     print("Turn on")
             elif cmd == "takepic":
-                if self.osvServer:
-                    self.osvServer.takePic()
+                if self.opvServer:
+                    self.opvServer.takePic()
                 else:
                     print("Take pic")                
             elif cmd == "auto":
@@ -224,8 +224,8 @@ class ControlTerm(threading.Thread):
                         print("Error : wrong distance")
                     else:
                         dist = math.ceil(dist/5)*5
-                        if self.osvServer:
-                            self.osvServer.setAuto(frequMetre=dist)
+                        if self.opvServer:
+                            self.opvServer.setAuto(frequMetre=dist)
                         else:
                             print("Setting auto-mode for",dist,"meters")
                 else:

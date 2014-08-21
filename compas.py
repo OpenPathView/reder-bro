@@ -5,13 +5,15 @@ class Compas:
     a simple class to acces the compas data
     """
     
-    def __init__(self,debug=False):
+    def __init__(self,opvServer=None):
         """
         init all stuff
-        """    
-        self.debug = debug
+        """
 
-        if not self.debug:
+        self.opvServer = opvServer
+    
+
+        if not self.opvServer.config.get("FAKE_MODE"):
             self.__hmc5883l = i2c_hmc5883l.i2c_hmc5883l(1)
             self.__hmc5883l.setContinuousMode()
             self.__hmc5883l.setDeclination(9,54) #used to correct default due to the geometry of earth magnetic field
@@ -24,7 +26,7 @@ class Compas:
         """
         return the heading of the compas
         """
-        if self.debug:
+        if self.opvServer.config.get("FAKE_MODE"):
             return "404°42"
         return self.__hmc5883l.getHeadingString()
         
@@ -32,7 +34,7 @@ class Compas:
         """
         return the declination of the compas
         """
-        if self.debug:
+        if self.opvServer.config.get("FAKE_MODE"):
             return "404°42"
         return self.__hmc5883l.getDeclinationString()
         

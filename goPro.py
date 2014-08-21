@@ -14,16 +14,15 @@ class GoPro(threading.Thread):
     that class allow the user to take photo via goPro camera
     """
 
-    def __init__(self,osvServer = None, debug=False):
+    def __init__(self,opvServer = None):
         """
         init serial port
         """
         print(color.OKBLUE+"Initializing GoPro server...",color.ENDC)
         threading.Thread.__init__(self)
         self.daemon = True
-        self.debug = debug
 
-        if not self.debug:
+        if not self.opvServer.config.get("FAKE_MODE"):
             self.arduino = serial.Serial(ARDUINO_SERIAL)
             self.arduino.readline()
         else:
@@ -34,7 +33,7 @@ class GoPro(threading.Thread):
         self.arduinoReady = threading.Event()
         self.arduinoReady.set()
         
-        self.osvServer = osvServer
+        self.opvServer = opvServer
         self.keepAlive = threading.Event()
 
         self.start()
@@ -51,7 +50,7 @@ class GoPro(threading.Thread):
         """
         turn all GoPro on
         """
-        if self.debug:
+        if self.opvServer.config.get("FAKE_MODE"):
             return 1
         
 
@@ -64,9 +63,9 @@ class GoPro(threading.Thread):
             while self.arduino.readline()!=b'ON\r\n':
                 time.sleep(1)
             
-            if self.osvServer:                             #tell the user the goPro just turned on (used for the old way)
+            if self.opvServer:                             #tell the user the goPro just turned on (used for the old way)
                 if self.takePhotoNow.isSet():
-                    self.osvServer.canMove()
+                    self.opvServer.canMove()
             else:
                 print("Camera on")
             time.sleep(3)
@@ -113,7 +112,7 @@ class GoPro(threading.Thread):
         """
         turn all GoPro off
         """
-        if self.debug:
+        if self.opvServer.config.get("FAKE_MODE"):
             return 1
         self.arduinoReady.wait()
         self.arduinoReady.clear()
@@ -139,7 +138,7 @@ class GoPro(threading.Thread):
         """
         change all GoPro mode
         """
-        if self.debug:
+        if self.opvServer.config.get("FAKE_MODE"):
             return 1
         self.arduinoReady.wait()
         self.arduinoReady.clear()
@@ -168,7 +167,7 @@ class GoPro(threading.Thread):
         self.keepAlive.set()
         while self.keepAlive.isSet():
             self.takePhotoNow.wait()#wait for the server to ask for a picture
-            if not self.debug:               
+            if not self.opvServer.config.get("FAKE_MODE"):               
                 self.arduinoReady.wait()        
                 self.__takePhoto()                
             self.takePhotoNow.clear()
@@ -177,7 +176,7 @@ class GoPro(threading.Thread):
         """
         private way to take photo (new way)
         """
-        if self.debug:
+        if self.opvServer.config.get("FAKE_MODE"):
             return 1
 
         if not force:
@@ -191,8 +190,8 @@ class GoPro(threading.Thread):
                 answer = self.arduino.readline()
             if answer == b'TAKEN\r\n':
                 print(color.OKGREEN+"GoPro took photo",color.ENDC)
-                if self.osvServer:
-                    self.osvServer.statut(True) #tell the osvServer the picTaking succed
+                if self.opvServer:
+                    self.opvServer.statut(True) #tell the opvServer the picTaking succed
                 else:
                     print("Pic taking succed")
                 return 1
@@ -204,8 +203,8 @@ class GoPro(threading.Thread):
                     if fail[i] == "1":
                         print("GoPro "+str(5-i)+" failed")
 
-                if self.osvServer:
-                    self.osvServer.statut(False,goProFailed=fail) #tell the osvServer the picTaking failed
+                if self.opvServer:
+                    self.opvServer.statut(False,goProFailed=fail) #tell the opvServer the picTaking failed
                 else:
                     print("Pic taking failed")                    
                 return 0
