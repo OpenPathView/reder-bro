@@ -98,7 +98,10 @@ class WebSocketServer(threading.Thread):
             lon = kwargs["longitude"]
             alt = kwargs["altitude"]
             rad = kwargs["heading"]
-            msg="""{"pano" : {"lat": "%F", lon:"%F", alt:"%F", rad:"%s"}}"""%(lat,lon,alt,rad)
+            msg='{"pano" : {"lat": %f, "lon":%f, "alt":%f, "rad":"%s"}}'%(lat,lon,alt,rad)
+            self.send2All(msg)
+        else:
+            msg='{"pano" : null}'
             self.send2All(msg)
 
     def notif(self,succes):
@@ -117,7 +120,6 @@ class WebSocketServer(threading.Thread):
         """
         send a message to all opened client webSocket
         """
-
         for index, client in enumerate(self.client) :
             try:
                 client.send(msg)
