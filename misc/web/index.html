@@ -28,6 +28,11 @@
                         qs("#controles").style.display = null;    
                     };
 
+                    this.ws.onerror = function(e){
+                        console.log("Error, event :");
+                        console.log(e);
+                    };
+
                     window.onbeforeunload = function(){
                         this.close();
                         alert("WebSocket connexion closed");
