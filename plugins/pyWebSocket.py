@@ -12,7 +12,7 @@ class WebSocketServer(threading.Thread):
         """
         init the WebSocket Server, receiveHandler, if given, is called when a socket receive data with socket as first parameter and msg as second one
         """
-        print(color.OKBLUE+"Initializing WebSocket server...",color.ENDC)
+        print(color.OKBLUE+"WebSocket : Initializing server...",color.ENDC)
         threading.Thread.__init__(self)
         self.opvServer = opvServer
         self.daemon = True
@@ -32,9 +32,9 @@ class WebSocketServer(threading.Thread):
                                     %(lat,lon,alt,rad)
                         self.panoramas.append(msg)
                     except Exception as e:
-                        print(color.WARNING,"Line %i malformed : %s"%(index,e),color.ENDC)            
+                        print(color.WARNING,"WebSocket : Line %i malformed : %s"%(index,e),color.ENDC)            
         except Exception:
-            print(color.WARNING,"File not found or malformed file",color.ENDC)
+            print(color.WARNING,"WebSocket : File not found or malformed file",color.ENDC)
 
 
         self.__webSock = socket.socket()
@@ -44,21 +44,21 @@ class WebSocketServer(threading.Thread):
         self.client = []
         self.keepAlive = threading.Event()        
         self.start()
-        print(color.OKGREEN+"WebSocket server initialized",color.ENDC)
+        print(color.OKGREEN+"WebSocket : server initialized",color.ENDC)
 
     def __del__(self):
         """
         destructor
         """
-        print(color.WARNING+"destroying WebSocket",color.ENDC)
+        print(color.WARNING+"WebSocket : destroying server",color.ENDC)
 
     def stop(self):
         """
         stop the thread
         """
-        print(color.OKBLUE+"Stopping WebSocket Thread...",color.ENDC)
+        print(color.OKBLUE+"WebSocket : Stopping thread...",color.ENDC)
         self.keepAlive.clear()
-        print(color.OKGREEN+"WebSocket Thread stopped",color.ENDC)
+        print(color.OKGREEN+"WebSocket : Thread stopped",color.ENDC)
     
     def run(self):
         """
@@ -152,7 +152,7 @@ class WebSocketClient(threading.Thread):
         """
         data = self.__sock.recv(1024).decode("ascii") #get the connection request
 
-        print(data)
+        print("WebSocket : ",data)
         
         data = data.split("\r\n")
         for i in data:
@@ -165,7 +165,7 @@ class WebSocketClient(threading.Thread):
         hasher.update(key1)        
         key = base64.b64encode(hasher.digest()).decode("utf-8")
         handshake = "HTTP/1.1 101 Web Socket Protocol Handshake\r\nUpgrade: WebSocket\r\nConnection: Upgrade\r\nWebSocket-Protocol: chat\r\nSec-WebSocket-Accept: "+str(key)+"\r\n\r\n"
-        print(handshake)
+        print("WebSocket : ",handshake)
         self.__sock.send(handshake.encode())
         
     def run(self):
@@ -247,7 +247,7 @@ class WebSocketClient(threading.Thread):
         if self.receiveHandler:
             self.receiveHandler(self,decoded)
         else:
-            print(decoded)
+            print("WebSocket : ",decoded)
         
     def getData(self):
         """

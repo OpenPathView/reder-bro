@@ -15,7 +15,7 @@ class ControlTerm(threading.Thread):
         """
         init the term
         """
-        print(color.OKBLUE+"Initializing controlTerm server...",color.ENDC)
+        print(color.OKBLUE+"ControlTerm : Initializing server...",color.ENDC)
         threading.Thread.__init__(self)
         self.daemon = True
         self.opvServer = opvServer
@@ -63,7 +63,7 @@ class ControlTerm(threading.Thread):
         self.keepAlive = threading.Event()
 
         self.start()
-        print(color.OKGREEN+"controlTerm server initialized",color.ENDC)
+        print(color.OKGREEN+"ControlTerm : server initialized",color.ENDC)
 
     def write(self,txtToWrite):
         """
@@ -96,15 +96,15 @@ class ControlTerm(threading.Thread):
         curses.echo()
         curses.nl()
         curses.endwin()    
-        print(color.WARNING+"destroying controlTerm",color.ENDC)        
+        print(color.WARNING+"ControlTerm : destroying",color.ENDC)        
 
     def stop(self):
         """
         stop the thread
         """
-        print(color.OKBLUE+"Stopping controlTerm Thread...",color.ENDC)
+        print(color.OKBLUE+"ControlTerm : Stopping thread...",color.ENDC)
         self.keepAlive.clear()
-        print(color.OKGREEN+"controlTerm Thread stopped",color.ENDC)
+        print(color.OKGREEN+"ControlTerm :  Thread stopped",color.ENDC)
 
     def run(self):
         """
@@ -185,7 +185,7 @@ class ControlTerm(threading.Thread):
         """
         command = command.lower().split(" ")
         if len(command)==0:
-            print("I can't read in your mind, you know that ?")
+            print("ControlTerm : No message")
         else:
             cmd = command[0]            
             if cmd == "quit":
@@ -194,42 +194,42 @@ class ControlTerm(threading.Thread):
                 self.dispArea.clear()
                 self.dispArea.refresh()
             elif cmd == "ping":
-                print(color.OKBLUE+"ping",color.ENDC)
-                print(color.OKGREEN+"ping",color.ENDC)
-                print(color.WARNING+"ping",color.ENDC)
-                print(color.FAIL+"ping",color.ENDC)
-                print(color.ENDC+"ping",color.ENDC)
+                print(color.OKBLUE+"ControlTerm : ping",color.ENDC)
+                print(color.OKGREEN+"ControlTerm : ping",color.ENDC)
+                print(color.WARNING+"ControlTerm : ping",color.ENDC)
+                print(color.FAIL+"ControlTerm : ping",color.ENDC)
+                print(color.ENDC+"ControlTerm : ping",color.ENDC)
             elif cmd == "geoinfo":
                 print("lat :",self.lat,"lon :",self.lon,"alt :",self.alt,"compas :",self.rad)
             elif cmd == "turnoff":
                 if self.opvServer:
                     self.opvServer.turnOff()
                 else:
-                    print("Turn off")
+                    print("ControlTerm : Turn off")
             elif cmd == "turnon":
                 if self.opvServer:
                     self.opvServer.turnOn()
                 else:
-                    print("Turn on")
+                    print("ControlTerm : Turn on")
             elif cmd == "takepic":
                 if self.opvServer:
                     self.opvServer.takePic()
                 else:
-                    print("Take pic")                
+                    print("ControlTerm : Take pic")                
             elif cmd == "auto":
                 if len(command) >= 2:
                     try:
                         dist = int(command[1])
                     except ValueError:
-                        print("Error : wrong distance")
+                        print("ControlTerm : Error : wrong distance")
                     else:
                         dist = math.ceil(dist/5)*5
                         if self.opvServer:
                             self.opvServer.setAuto(frequMetre=dist)
                         else:
-                            print("Setting auto-mode for",dist,"meters")
+                            print("ControlTerm : Setting auto-mode for",dist,"meters")
                 else:
-                    print("Distance parameter missing")
+                    print("ControlTerm : Distance parameter missing")
             else:
                 if cmd != "help":
                     print("Command :",command,"unrecognized")

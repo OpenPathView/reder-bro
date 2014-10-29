@@ -53,7 +53,7 @@ class LiveViewServer(threading.Thread):
         """
         init the server, loading needed componant
         """
-        print(color.OKBLUE+"Initializing LiveView server...",color.ENDC)
+        print(color.OKBLUE+"LiveViewServer : Initializing server...",color.ENDC)
         threading.Thread.__init__(self)
         self.daemon = True        
  
@@ -93,13 +93,13 @@ class LiveViewServer(threading.Thread):
 
         self.keepAlive = threading.Event()
         self.start()
-        print(color.OKGREEN+"LiveView server initialized",color.ENDC)
+        print(color.OKGREEN+"LiveViewServer : server initialized",color.ENDC)
 
     def __del__(self):
         """
         destructor
         """
-        print(color.WARNING+"destroying LiveView Server",color.ENDC)
+        print(color.WARNING+"LiveViewServer : destroying server",color.ENDC)
             
     def setAutoModeConf(self):
         """
@@ -111,7 +111,7 @@ class LiveViewServer(threading.Thread):
                 self.opvServer.setAuto() #disable automode
             self.opvServer.updateAllConfigInfo()
         else:
-            print("Setting auto mode conf :",self.autoModeDist,"AutoMode :","On" if self.autoModeOn else "Off")
+            print("LiveViewServer : Setting auto mode conf :",self.autoModeDist,"AutoMode :","On" if self.autoModeOn else "Off")
                         
     def connect(self):
         """
@@ -181,7 +181,7 @@ class LiveViewServer(threading.Thread):
         try:
             self.clientSocket.send(LiveViewMessages.EncodeSetVibrate(0, 250))
         except socket.error:
-            print(color.FAIL+"Error, socket unavailable",color.ENDC)          
+            print(color.FAIL+"LiveViewServer : Error, socket unavailable",color.ENDC)          
 
     def notif(self,succes):
         """
@@ -193,15 +193,15 @@ class LiveViewServer(threading.Thread):
             else:
                 self.clientSocket.send(LiveViewMessages.EncodeSetVibrate(0, 5000))
         except socket.error:
-            print(color.FAIL+"Error, socket unavailable",color.ENDC)        
+            print(color.FAIL+"LiveViewServer : Error, socket unavailable",color.ENDC)        
 
     def stop(self):
         """
         stop the thread
         """
-        print(color.OKBLUE+"Stopping LiveView Thread...",color.ENDC)
+        print(color.OKBLUE+"LiveViewServer : Stopping thread...",color.ENDC)
         self.keepAlive.clear()
-        print(color.OKGREEN+"LiveView Thread stopped",color.ENDC)
+        print(color.OKGREEN+"LiveViewServer : Thread stopped",color.ENDC)
 
     def run(self):
         """
@@ -218,7 +218,7 @@ class LiveViewServer(threading.Thread):
             except socket.error as e:
                 if str(lastFail)!=str(e):
                     lastFail=e
-                    print(color.WARNING+"Connexion failed",e,color.ENDC)
+                    print(color.WARNING+"LiveViewServer : Connexion failed",e,color.ENDC)
                 self.disconnect()
                 continue            #If the connection fail we keep trying                                
             try :                   #a try statement allow prevent crash in case of disconnect
@@ -228,7 +228,7 @@ class LiveViewServer(threading.Thread):
                         # Handle result messages
                         if isinstance(msg, LiveViewMessages.Result):
                             if msg.code != LiveViewMessages.RESULT_OK:
-                                print("---------------------------- NON-OK RESULT RECEIVED ----------------------------------")
+                                print("LiveViewServer : ---------------------------- NON-OK RESULT RECEIVED ----------------------------------")
                                 print(msg)
                             continue
                         # Handling for all other messages
@@ -236,7 +236,7 @@ class LiveViewServer(threading.Thread):
                         if isinstance(msg, LiveViewMessages.GetMenuItems):
                             self.initMenu()
                         elif isinstance(msg, LiveViewMessages.GetMenuItem):
-                            print("---------------------------- GETMENUITEM RECEIVED ----------------------------------")
+                            print("LiveViewServer : ---------------------------- GETMENUITEM RECEIVED ----------------------------------")
                             # FIXME: do something!
 
                         elif isinstance(msg, LiveViewMessages.DisplayCapabilities):
@@ -282,30 +282,30 @@ class LiveViewServer(threading.Thread):
                                     self.autoModeOn=autoModeOn
                                     self.setAutoModeConf()
                                     if self.autoModeOn:
-                                        print(color.OKBLUE+"auto mode set",color.ENDC)
+                                        print(color.OKBLUE+"LiveViewServer : auto mode set",color.ENDC)
                                     else:
-                                        print(color.OKBLUE+"auto mode unset",color.ENDC)                            
+                                        print(color.OKBLUE+"LiveViewServer : auto mode unset",color.ENDC)                            
                             if msg.wasInAlert == False:
                                 if msg.menuItemId == MANU_MENU_ID:
                                     if self.opvServer:
                                         self.opvServer.takePic()
                                     else:
-                                        print("Take pic")
+                                        print("LiveViewServer : Take pic")
                                 elif msg.menuItemId == ON_MENU_ID:
                                     if self.opvServer:
                                         self.opvServer.turnOn()
                                     else:
-                                        print("Turn on")
+                                        print("LiveViewServer : Turn on")
                                 elif msg.menuItemId == OFF_MENU_ID:
                                     if self.opvServer:
                                         self.opvServer.turnOff()
                                     else:
-                                        print("Turn off")                                    
+                                        print("LiveViewServer : Turn off")                                    
                             self.clientSocket.send(LiveViewMessages.EncodeNavigationResponse(LiveViewMessages.RESULT_EXIT))                                        
                             self.clientSocket.send(LiveViewMessages.EncodeClearDisplay())
 
             except socket.error as e:
-                print(color.WARNING+"Connexion lost :",e,color.ENDC)                        
+                print(color.WARNING+"LiveViewServer : Connexion lost :",e,color.ENDC)                        
 
 if __name__=="__main__":
     serv = LiveViewServer()
