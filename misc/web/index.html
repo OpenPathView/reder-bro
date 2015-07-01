@@ -13,15 +13,27 @@
                 return document.querySelector(s);
             };
 
+            var posIcon = L.icon({
+                iconUrl: 'static/images/marker-pos.png',
+                shadowUrl: 'static/images/marker-pos-shadow.png',
+
+                iconSize:     [75, 76], // size of the icon
+                shadowSize:   [103, 57], // size of the shadow
+                iconAnchor:   [37, 71], // point of the icon which will correspond to marker's location
+                shadowAnchor: [36, 51],  // the same for the shadow
+                popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+            });
 
 
             var ws = new function(){
                 this.ws = null;
+                this.userPos = L.marker([0,0], {icon: posIcon});
+                var thatUserPos = this.userPos;
 
                 this.openSocket = function(){
 
                     this.ws = new WebSocket(qs("#ws_url").value, "chat");
-                    
+
 
                     this.ws.onopen = function(e){
                         //console.log("WebSocket opened, event :");
@@ -29,14 +41,15 @@
                         qs("#connectionInfos").style.display = "none";    
                         qs("#controles").style.display = null;
 
-                        var map = L.map('map').setView([48.41416, -4.47197], 13);
+                        this.map = L.map('map').setView([48.41416, -4.47197], 13);
                         L.tileLayer('/map/{z}/{x}/{y}.png', {
                         attribution: 'tmp',
                         maxZoom: 19,
                         minZoom: 1
-                        }).addTo(map);
+                        }).addTo(this.map);
 
-                        map.attributionControl.setPrefix(''); // Don't show the 'Powered by Leaflet' text. Attribution overload
+                        this.map.attributionControl.setPrefix(''); // Don't show the 'Powered by Leaflet' text. Attribution overload
+                        thatUserPos.addTo(this.map);
                     };
 
                     this.ws.onerror = function(e){
@@ -68,6 +81,20 @@
                             qs("#lon").innerHTML="long "+rep.pos.long;
                             qs("#alt").innerHTML="alt "+rep.pos.alt;
                             qs("#rad").innerHTML="rad "+rep.pos.rad;
+                            var valideData = false;
+                            var latlng;
+                            try{
+                                latlng = L.latLng(rep.pos.lat, rep.pos.long);
+                                valideData = true;
+                            }
+                            catch(err)
+                            {
+                                valideData = false;
+                            }
+                            if(valideData==true){
+                                thatUserPos.setLatLng(latlng);
+                                thatUserPos.update();
+                            }
                         }
                         else if(rep.hasOwnProperty('config')){
                             if (rep.auto == "True"){
@@ -78,8 +105,8 @@
                             }
                         }
                         else if(rep.hasOwnProperty('pano')){
-                            //console.log(rep);
                             // TODO : add map with panorama coordinates and user position
+                            L.marker([rep.pano.lat, rep.pano.lon]).addTo(this.map);
                             // '{"pano" : {"lat": "%F", lon:"%F", alt:"%F", rad:"%s"}}'
                         }
                         else if(rep.hasOwnProperty('succes')){
@@ -119,8 +146,14 @@
 
     <body style="height: 100%; width: 100%; margin:0;">
         <div id="connectionInfos">
-            <label>URL de connection : <input type="text" id="ws_url" value="ws://192.168.42.1:9876/"></label>
+            <!-- <label>URL de connection : <input type="text" id="ws_url" value="ws://192.168.42.1:9876/"></label> -->
+            <label>URL de connection : <input type="text" id="ws_url" value=""></label>
             <button onclick="ws.openSocket()">Connect</button><br>
+
+            <script type="text/javascript">
+                // autoset remote server ip
+                document.getElementById("ws_url").value = "ws://"+location.host+":9876/";
+            </script>
         </div>
 
         <div id="controles" style="display:none;">
