@@ -1,198 +1,92 @@
 <!DOCTYPE html>
-<html style="height: 100%; width: 100%; margin:0;">
+<html lang="en">
     <head>
         <title>OPV Mobile Controler</title>
-        
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
-        <link rel="stylesheet" href="static/leaflet.css" />
-        <script src="static/leaflet.js"></script>
+        <link rel="stylesheet" href="static/css/bootstrap.min.css" />        
+        <link rel="stylesheet" href="static/css/leaflet.css" />
+        <link rel="stylesheet" href="static/css/main.css" />
 
-        <script type="text/javascript">
-
-            var qs = function(s){
-                return document.querySelector(s);
-            };
-
-            var posIcon = L.icon({
-                iconUrl: 'static/images/marker-pos.png',
-                shadowUrl: 'static/images/marker-pos-shadow.png',
-
-                iconSize:     [75, 76], // size of the icon
-                shadowSize:   [103, 57], // size of the shadow
-                iconAnchor:   [37, 71], // point of the icon which will correspond to marker's location
-                shadowAnchor: [36, 51],  // the same for the shadow
-                popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
-            });
-
-
-            var ws = new function(){
-                this.ws = null;
-                this.userPos = L.marker([0,0], {icon: posIcon});
-                var thatUserPos = this.userPos;
-
-                this.openSocket = function(){
-
-                    this.ws = new WebSocket(qs("#ws_url").value, "chat");
-
-
-                    this.ws.onopen = function(e){
-                        //console.log("WebSocket opened, event :");
-                        //console.log(e);
-                        qs("#connectionInfos").style.display = "none";    
-                        qs("#controles").style.display = null;
-
-                        this.map = L.map('map').setView([48.41416, -4.47197], 13);
-                        L.tileLayer('/map/{z}/{x}/{y}.png', {
-                        attribution: 'tmp',
-                        maxZoom: 19,
-                        minZoom: 1
-                        }).addTo(this.map);
-
-                        this.map.attributionControl.setPrefix(''); // Don't show the 'Powered by Leaflet' text. Attribution overload
-                        thatUserPos.addTo(this.map);
-                    };
-
-                    this.ws.onerror = function(e){
-                        //console.log("Error, event :");
-                        //console.log(e);
-                    };
-
-                    window.onbeforeunload = function(){
-                        this.close();
-                        alert("WebSocket connexion closed");
-                    };
-
-                    this.ws.onclose = function(e){
-                        //console.log("WebSocket closed, event :");
-                        //console.log(e);
-                        qs("#connectionInfos").style.display = null;    
-                        qs("#controles").style.display = "none";
-                        this.close();
-                        alert("WebSocket connexion closed");
-                    };
-                    
-                    this.ws.onmessage = function(e){
-                        //console.log(e.data);
-                        var rep = JSON.parse(e.data);
-                        //console.log(rep);
-                
-                        if( rep.hasOwnProperty('pos') ){
-                            qs("#lat").innerHTML="lat "+rep.pos.lat;
-                            qs("#lon").innerHTML="long "+rep.pos.long;
-                            qs("#alt").innerHTML="alt "+rep.pos.alt;
-                            qs("#rad").innerHTML="rad "+rep.pos.rad;
-                            var valideData = false;
-                            var latlng;
-                            try{
-                                latlng = L.latLng(rep.pos.lat, rep.pos.long);
-                                valideData = true;
-                            }
-                            catch(err)
-                            {
-                                valideData = false;
-                            }
-                            if(valideData==true){
-                                thatUserPos.setLatLng(latlng);
-                                thatUserPos.update();
-                            }
-                        }
-                        else if(rep.hasOwnProperty('config')){
-                            if (rep.auto == "True"){
-                                qs("#mode").value = rep.dist                                
-                            }
-                            else{
-                                qs("#mode").value = 0
-                            }
-                        }
-                        else if(rep.hasOwnProperty('pano')){
-                            // TODO : add map with panorama coordinates and user position
-                            L.marker([rep.pano.lat, rep.pano.lon]).addTo(this.map);
-                            // '{"pano" : {"lat": "%F", lon:"%F", alt:"%F", rad:"%s"}}'
-                        }
-                        else if(rep.hasOwnProperty('succes')){
-                            if(rep.succes=="false"){
-                                alert("echec du serveur")
-                            }
-                        }
-
-                    };
-                };
-
-                this.setAutoMode = function(){
-                    selectedDist = qs("#mode").value
-                    var data = { set: "automode", dist: selectedDist};
-                    this.ws.send( JSON.stringify(data) );            
-                };
-                
-                this.turnOn = function(){
-                    var data = { action: "turnon" };
-                    this.ws.send( JSON.stringify(data) );                
-                };
-
-                this.turnOff = function(){
-                    var data = { action: "turnoff" };
-                    this.ws.send( JSON.stringify(data) );                
-                };
-
-                this.takePic = function(){
-                    var data = { action: "takepic" };
-                    this.ws.send( JSON.stringify(data) );                
-                };
-
-            }();
-        
-        </script>
+        <script src="static/js/leaflet.js"></script>
+        <script src="static/js/jquery-2.1.4.min.js"></script>
+        <script src="static/js/bootstrap.min.js"></script>
+        <script src="static/js/main.js"></script>
     </head>
 
-    <body style="height: 100%; width: 100%; margin:0;">
+    <body class="container">
+        <h1>
+            OPV Mobile Controler
+        </h1>
         <div id="connectionInfos">
-            <!-- <label>URL de connection : <input type="text" id="ws_url" value="ws://192.168.42.1:9876/"></label> -->
-            <label>URL de connection : <input type="text" id="ws_url" value=""></label>
-            <button onclick="ws.openSocket()">Connect</button><br>
+            <div class="form-group">
+                <label for="ws_url">URL de connection :</label>
+                <input class="form-control" type="text" id="ws_url" value="">
+            </div>
+            <button class="btn btn-default" onclick="ws.openSocket()">Connect</button><br>
 
             <script type="text/javascript">
-                // autoset remote server ip
                 document.getElementById("ws_url").value = "ws://"+location.host+":9876/";
             </script>
         </div>
 
         <div id="controles" style="display:none;">
-            <div>
-                <div id="geoInfos">
-                    <p id="lat"></p>
-                    <p id="lon"></p>
-                    <p id="alt"></p>
-                    <p id="rad"></p>
-                </div>
 
-                <div id="settings">
-                    <p>Mode : 
-                        <select id="mode" onchange="ws.setAutoMode()">
-                            <option value = "0">0ff</option>
-                            <option value = "5">5</option>
-                            <option value = "10">10</option>
-                            <option value = "15">15</option>
-                            <option value = "20">20</option>
-                            <option value = "30">30</option>
-                            <option value = "35">35</option>
-                            <option value = "30">30</option>
-                            <option value = "35">35</option>                
-                            <option value = "40">40</option>
-                            <option value = "45">45</option>
-                            <option value = "50">50</option>
-                        </select>
-                    </p>
-                </div>
+            <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#buttonMenu" aria-expanded="false" aria-controls="buttonMenu">
+                Options
+            </button>
+            <div class="collapse" id="buttonMenu">
+                <div class="well">
 
-                <div id="buttons">
-                    <button type="button" onclick="ws.turnOn()">Turn On</button>
-                    <button type="button" onclick="ws.turnOff()">Turn Off</button>
-                    <button type="button" onclick="ws.takePic()">Take picture</button>
+                    <table class="table table-hover" id="geoInfos">
+                        <tr>
+                            <th>Latitude</th>
+                            <th>Longitude</th>
+                            <th>Altitude</th>
+                            <th>Heading</th>
+                        </tr>
+                        <tr>
+                            <td id="lat"></td>
+                            <td id="lon"></td>
+                            <td id="alt"></td>
+                            <td id="rad"></td>
+                        </tr>
+                    </table>
+
+                    <div id="settings">
+                        <p>Mode : 
+                            <select class="form-control" id="mode" onchange="ws.setAutoMode()">
+                                <option value = "0">0ff</option>
+                                <option value = "5">5</option>
+                                <option value = "10">10</option>
+                                <option value = "15">15</option>
+                                <option value = "20">20</option>
+                                <option value = "30">30</option>
+                                <option value = "35">35</option>
+                                <option value = "30">30</option>
+                                <option value = "35">35</option>                
+                                <option value = "40">40</option>
+                                <option value = "45">45</option>
+                                <option value = "50">50</option>
+                            </select>
+                        </p>
+                    </div>
+
+                    <div id="buttons">
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-default" type="button" onclick="ws.turnOn()">Turn On</button>
+                            <button class="btn btn-default" type="button" onclick="ws.turnOff()">Turn Off</button>
+                        </div>
+                        <button class="btn btn-default" type="button" onclick="ws.takePic()">Take picture</button>
+                    </div>            
                 </div>
             </div>
-            <div id="map"  style="height: 500px; width: 100%; margin:0;">
+
+            <div id="map">
                 <!-- Will contain the map -->
             </div>
+
         </div>
+
     </body>
 </html>
