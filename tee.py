@@ -38,6 +38,7 @@ class Tee(object):
         self.beginNewLine=endWithCR
         self.logFile.write(data)
         self.stdout.write(data)
+        self.flush()
         self.__writeLock.release()
 
     def __del__(self):

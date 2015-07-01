@@ -1,7 +1,10 @@
 # OPV files : 
 
 picturesInfo.csv
+*.csv
 misc/venv/
+misc/web/map
+track
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

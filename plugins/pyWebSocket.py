@@ -4,6 +4,8 @@ import json
 
 SOCKET_PORT = 9876
 
+#TODO : add mutex for client list
+
 class WebSocketServer(threading.Thread):
     """
     A server receiving connection for websocket
@@ -73,7 +75,13 @@ class WebSocketServer(threading.Thread):
                 newClient = WebSocketClient(conn, address, self.receiveHandler)
                 self.client.append(newClient)
                 for p in self.panoramas:
-                    newClient.send(p)
+                    try:
+                        newClient.send(p)
+                    except socket.error as e:
+                        print(color.WARNING+"WebSocket : error on newly connected client :",e,color.ENDC)
+                        self.client.pop(len(self.client)-1)
+                        break
+
                     
     def setGeoInfo(self,lat,lon,alt,rad):
         """
@@ -152,9 +160,8 @@ class WebSocketClient(threading.Thread):
         handshake the client
         """
         data = self.__sock.recv(1024).decode("ascii") #get the connection request
+        print(color.OKBLUE,"WebSocket (handshake): \n",data,color.ENDC)
 
-        print("WebSocket : ",data)
-        
         data = data.split("\r\n")
         for i in data:
             if "Sec-WebSocket-Key" in i:
@@ -165,7 +172,7 @@ class WebSocketClient(threading.Thread):
         key1 = i[len("Sec-WebSocket-Key: "):]
         hasher.update(key1)        
         key = base64.b64encode(hasher.digest()).decode("utf-8")
-        handshake = "HTTP/1.1 101 Web Socket Protocol Handshake\r\nUpgrade: WebSocket\r\nConnection: Upgrade\r\nWebSocket-Protocol: chat\r\nSec-WebSocket-Accept: "+str(key)+"\r\n\r\n"
+        handshake = "HTTP/1.1 101 Web Socket Protocol Handshake\r\nUpgrade: WebSocket\r\nConnection: Upgrade\r\nSec-WebSocket-Protocol: chat\r\nSec-WebSocket-Accept: "+str(key)+"\r\n\r\n"
         print("WebSocket : ",handshake)
         self.__sock.send(handshake.encode())
         
