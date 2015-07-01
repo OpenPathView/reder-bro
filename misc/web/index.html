@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html style="height: 100%; width: 100%; margin:0;">
     <head>
         <title>OPV Mobile Controler</title>
         
@@ -13,6 +13,8 @@
                 return document.querySelector(s);
             };
 
+
+
             var ws = new function(){
                 this.ws = null;
 
@@ -25,7 +27,16 @@
                         //console.log("WebSocket opened, event :");
                         //console.log(e);
                         qs("#connectionInfos").style.display = "none";    
-                        qs("#controles").style.display = null;    
+                        qs("#controles").style.display = null;
+
+                        var map = L.map('map').setView([48.41416, -4.47197], 13);
+                        L.tileLayer('/map/{z}/{x}/{y}.png', {
+                        attribution: 'tmp',
+                        maxZoom: 19,
+                        minZoom: 1
+                        }).addTo(map);
+
+                        map.attributionControl.setPrefix(''); // Don't show the 'Powered by Leaflet' text. Attribution overload
                     };
 
                     this.ws.onerror = function(e){
@@ -106,70 +117,49 @@
         </script>
     </head>
 
-    <body>
+    <body style="height: 100%; width: 100%; margin:0;">
         <div id="connectionInfos">
             <label>URL de connection : <input type="text" id="ws_url" value="ws://192.168.42.1:9876/"></label>
             <button onclick="ws.openSocket()">Connect</button><br>
         </div>
 
         <div id="controles" style="display:none;">
-            <div id="geoInfos">
-                <p id="lat"></p>
-                <p id="lon"></p>
-                <p id="alt"></p>
-                <p id="rad"></p>
-            </div>
+            <div>
+                <div id="geoInfos">
+                    <p id="lat"></p>
+                    <p id="lon"></p>
+                    <p id="alt"></p>
+                    <p id="rad"></p>
+                </div>
 
-            <div id="settings">
-                <p>Mode : 
-                    <select id="mode" onchange="ws.setAutoMode()">
-                        <option value = "0">0ff</option>
-                        <option value = "5">5</option>
-                        <option value = "10">10</option>
-                        <option value = "15">15</option>
-                        <option value = "20">20</option>
-                        <option value = "30">30</option>
-                        <option value = "35">35</option>
-                        <option value = "30">30</option>
-                        <option value = "35">35</option>                
-                        <option value = "40">40</option>
-                        <option value = "45">45</option>
-                        <option value = "50">50</option>
-                    </select>
-                </p>
-            </div>
+                <div id="settings">
+                    <p>Mode : 
+                        <select id="mode" onchange="ws.setAutoMode()">
+                            <option value = "0">0ff</option>
+                            <option value = "5">5</option>
+                            <option value = "10">10</option>
+                            <option value = "15">15</option>
+                            <option value = "20">20</option>
+                            <option value = "30">30</option>
+                            <option value = "35">35</option>
+                            <option value = "30">30</option>
+                            <option value = "35">35</option>                
+                            <option value = "40">40</option>
+                            <option value = "45">45</option>
+                            <option value = "50">50</option>
+                        </select>
+                    </p>
+                </div>
 
-            <div id="buttons">
-                <button type="button" onclick="ws.turnOn()">Turn On</button>
-                <button type="button" onclick="ws.turnOff()">Turn Off</button>
-                <button type="button" onclick="ws.takePic()">Take picture</button>
+                <div id="buttons">
+                    <button type="button" onclick="ws.turnOn()">Turn On</button>
+                    <button type="button" onclick="ws.turnOff()">Turn Off</button>
+                    <button type="button" onclick="ws.takePic()">Take picture</button>
+                </div>
             </div>
-
-            <div id="map" style="height: 500px;">
+            <div id="map"  style="height: 500px; width: 100%; margin:0;">
                 <!-- Will contain the map -->
             </div>
         </div>
-        <script type="text/javascript">
-            var map = L.map('map').setView([48.41416, -4.47197], 13);
-            // L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            //     attribution: '© <a href="http://openstreetmap.org">OpenStreetMap</a> contributors',
-            //     maxZoom: 18
-            // }).addTo(map);
-            L.tileLayer('map/{z}/{x}/{y}.png', {
-                attribution: 'tmp',
-                maxZoom: 19,
-                minZoom: 1
-            }).addTo(map);
-
-
-            map.attributionControl.setPrefix(''); // Don't show the 'Powered by Leaflet' text. Attribution overload
-
-/*            L.tileLayer('http://{s}.tiles.mapbox.com/v3/MapID/{z}/{x}/{y}.png', {
-                attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
-                maxZoom: 18
-                }).addTo(map);*/
-        </script>
-
-
     </body>
 </html>
