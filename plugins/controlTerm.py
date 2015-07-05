@@ -175,7 +175,10 @@ class ControlTerm(threading.Thread):
                 history[-1] = history[-1][:cursorPos]+chr(key)+history[-1][cursorPos:]
                 cursorPos +=1
             self.commandArea.clear()    
-            self.commandArea.addstr(history[-1])                    
+            try:
+                self.commandArea.addstr(history[-1])                    
+            except Exception as e:
+                print(color.WARNING,e,"with string : ",history[-1],color.END)
             self.commandArea.chgat(0,cursorPos,1,curses.A_REVERSE)
             self.commandArea.refresh()
 

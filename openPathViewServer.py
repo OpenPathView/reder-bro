@@ -42,7 +42,8 @@ class OpenPathViewServer(threading.Thread):
 
 
 
-        self.gps = gps.Gps(self,"/dev/ttyAMA0",baudrate=115200)
+        #self.gps = gps.Gps(self,"/dev/ttyAMA0",baudrate=115200)
+        self.gps = gps.Gps(self,"/dev/ttyAMA0",baudrate=9600)
         self.lastLatLon = self.gps.getDegCoord()
         
         self.compas = compas.Compas(self)           

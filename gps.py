@@ -67,6 +67,7 @@ class Gps(object):
         if self.opvServer.config.get("FAKE_MODE"):
             return
         try:
+                print("baudrate",self.baudrate)
                 self.ser = serial.Serial(port=self.port,
                                          baudrate=self.baudrate,
                                          timeout=self.timeout)
@@ -146,10 +147,10 @@ class Gps(object):
                     except UnicodeDecodeError:
                         data = ""                        
                     msg=msg[msg.find(END)+len(END):]
-                    #print(data)
+                    os.system("echo '{0}' >> track_full".format(data))
                     data = data.split(",")
-                    
-                    if data[0]=="$GPGGA" and len(data) >= 10:#If the object contain the right data
+
+                    if data[0]=="$GNGGA" and len(data) >= 10:#If the object contain the right data
                         if self.opvServer.config.get("GPS_DEBUG"):
                             print(data)
                         #$GPGGA,<time>,<lat>,<N/S>,<lon>,<E/W>,<positionnement type>,<satelite number>,<HDOP>,<alt>,<other thing>
