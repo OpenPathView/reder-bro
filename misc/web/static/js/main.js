@@ -120,6 +120,16 @@ var ws = new function(){
         var data = { action: "turnoff" };
         this.ws.send( JSON.stringify(data) );                
     };
+  
+    this.goProPowerOff = function(){
+        var data = { action: "gopropoweroff" };
+        this.ws.send( JSON.stringify(data) );
+    };
+
+    this.goProPowerOn = function(){
+        var data = { action: "gopropoweron" };
+        this.ws.send( JSON.stringify(data) );
+    };
 
     this.takePic = function(){
         var data = { action: "takepic" };

@@ -14,7 +14,7 @@ class Gps(object):
     """
     a class to manage serial connected gps
     """
-    
+
     def __init__(self,opvServer=None,port=None, baudrate=115200, timeout=1):
         """
         init the gps, if all needed information are provided, will connect the serial
@@ -49,21 +49,21 @@ class Gps(object):
         print(color.OKGREEN+"GPS initialized",color.ENDC)
         if self.opvServer.config.get("FAKE_MODE"):
             self.__updateData()
-	            
+
     def __del__(self):#ensure that the serial port is closed
         """
         destroy the gps
         """
         print(color.WARNING+"destroying GPS",color.ENDC)
-        if self.ser != None:        
+        if self.ser != None:
             if self.ser.isOpen():
                 self.ser.close()
-                
+
     def connect(self):
         """
         connect the gps
         """
-        
+
         if self.opvServer.config.get("FAKE_MODE"):
             return
         try:
@@ -76,8 +76,8 @@ class Gps(object):
             self.ser = None
         except serial.SerialException as e:
             print("Error",e)
-            self.ser = None            
-        self.__dataLoop = True                
+            self.ser = None
+        self.__dataLoop = True
         self.__updateThread = threading.Thread(target=self.__updateData)
         self.__updateThread.daemon = True
         self.__updateThread.start()
@@ -86,7 +86,7 @@ class Gps(object):
         """
         check if the gps is connected
         """
-        
+
         if self.opvServer.config.get("FAKE_MODE"):#check if the GPS is connected
             return True
         elif self.ser != None:
@@ -96,11 +96,11 @@ class Gps(object):
         """
         disconnect the gps
         """
-        
+
         if self.ser != None and not self.opvServer.config.get("FAKE_MODE"):
             self.__dataLoop = False
             self.ser.close()
-            
+
     def stop(self):
         """
         stop the thread
@@ -113,7 +113,7 @@ class Gps(object):
         """
         a loop to update data
         """
-        
+
         if self.opvServer.config.get("FAKE_MODE"):
             self.sat = 7
             self.lat = "4821.5588333N"
@@ -128,27 +128,47 @@ class Gps(object):
             self.data = ""
             print(color.WARNING+"Warning : GPS in debug mode /!\\",color.ENDC)
             return 1
-            
+
         if self.ser == None:
             print("No serial port declared")
             return -1
-            
+
         if not self.isConnected():
             print("Serial port not connected")
             return -1
         else:
             msg = b""
-            data = ""                           
-            while self.__dataLoop :                             
+            data = ""
+            while self.__dataLoop :
                 msg+=(self.ser.read(self.ser.inWaiting()))
-                if END in msg:                    
+                if END in msg:
                     try:
                         data=msg[:msg.find(END)].decode("ascii")
                     except UnicodeDecodeError:
-                        data = ""                        
+                        data = ""
                     msg=msg[msg.find(END)+len(END):]
-                    os.system("echo '{0}' >> track_full".format(data))
+                    #os.system("echo '{0}' >> track_full".format(data))
                     data = data.split(",")
+
+                    if data[0] == "$GPGGA":
+                        with open("log.txt","a") as f:
+                            f.writelines(str(data)+"\n")
+                        if self.opvServer.config.get("GPS_DEBUG"):
+                            print(data)
+                        #$GGA,<time>,<lat>,<N/S>,<long>,<E/W>,<GPS-QUAL>,<satelite>,<hdop>,<alt>,<mode>,<otherthing>
+                        self.sat = data[7]
+                        self.lat = (data[2]+data[3])
+                        self.lon = (data[4]+data[5])
+                        self.alt = data[9]
+                        self.time = data[1]
+                        self.hdop = data[8]
+
+                        lat,lon = self.last_coord
+                        distance = self.calculateDist(lat,lon)
+                        if distance >= DIST_TRIGGER:
+                            self.last_coord = self.getDegCoord()
+                            os.system("""echo "%f; %f" >> track"""%(self.last_coord[0],self.last_coord[1]))
+
 
                     if data[0]=="$GNGGA" and len(data) >= 10:#If the object contain the right data
                         if self.opvServer.config.get("GPS_DEBUG"):
@@ -157,7 +177,7 @@ class Gps(object):
                         self.data = data
                         self.sat = self.data[7]
                         self.lat = str(self.data[2]+self.data[3])
-                        self.lon = str(self.data[4]+self.data[5])                        
+                        self.lon = str(self.data[4]+self.data[5])
                         self.alt = self.data[9]
                         self.time = self.data[1]
                         self.hdop = self.data[8]
@@ -166,12 +186,12 @@ class Gps(object):
                         distance = self.calculateDist(lat,lon)
                         if distance >= DIST_TRIGGER:
                             self.last_coord = self.getDegCoord()
-                            os.system("""echo "%f; %f" >> track"""%(self.last_coord[0],self.last_coord[1]))        
+                            os.system("""echo "%f; %f" >> track"""%(self.last_coord[0],self.last_coord[1]))
 
     def getDataDict(self):
         """
         return all gps data under a dict structure
-        """        
+        """
         return {"sat":self.sat,
         "lat":self.lat,
         "lon":self.lon,
@@ -197,19 +217,19 @@ class Gps(object):
                 if lon[-1]=="W":#define the signe
                     lon = -float(lon[:-1])/100.0
                 else:
-                    lon = float(lon[:-1])/100.0  
+                    lon = float(lon[:-1])/100.0
             except (TypeError, ValueError):
                 return None, None
             lat_deg = int(lat)
             lat_min = (100.0*(float(lat)-lat_deg))/60
             lat = lat_deg+lat_min
-            
+
             lon_deg = int(lon)
             lon_min = (100.0*(float(lon)-lon_deg))/60
             lon = lon_deg+lon_min
 
             return lat, lon
-            
+
         return 0, 0#mean it didin't work
 
     def getAltitude(self):
@@ -239,7 +259,7 @@ class Gps(object):
             return 1000.0*EARTH_RADIUS*acos(sin(lastLat)*sin(newLat)+cos(lastLat)*cos(newLat)*cos(lastLon-newLon))
         except ValueError:
             return 0
-        
+
 
 class gpsError(Exception):
     """
@@ -251,12 +271,3 @@ class gpsError(Exception):
         self.Errors = Errors
     def __str__(self):
         print("GPS ERROR : ",self.Errors)
-
-
-
-
-
-
-
-
-

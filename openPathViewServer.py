@@ -1,5 +1,7 @@
 #!/usr/bin/python3.2
 
+import RPi.GPIO as gpio
+
 import threading, time
 import os
 import sys
@@ -42,8 +44,8 @@ class OpenPathViewServer(threading.Thread):
 
 
 
-        #self.gps = gps.Gps(self,"/dev/ttyAMA0",baudrate=115200)
-        self.gps = gps.Gps(self,"/dev/ttyAMA0",baudrate=9600)
+        self.gps = gps.Gps(self,"/dev/ttyAMA0",baudrate=115200)
+        #self.gps = gps.Gps(self,"/dev/ttyAMA0",baudrate=9600)
         self.lastLatLon = self.gps.getDegCoord()
         
         self.compas = compas.Compas(self)           
@@ -119,6 +121,19 @@ class OpenPathViewServer(threading.Thread):
         thread = threading.Thread(target = self.__turnOffThread)
         thread.daemon=True
         thread.start()
+
+    def goproPowerOn(self):
+        """
+        Power all GoPro On
+        """
+        gpio.output(26, gpio.HIGH)
+
+    def goproPowerOff(self):
+        """
+        Power all GoPro Off
+        """
+        gpio.output(26, gpio.LOW)
+
                     
     def statut(self,succes,goProFailed="000000"):
         """
@@ -203,6 +218,10 @@ class OpenPathViewServer(threading.Thread):
                 self.turnOn()
             elif msg["action"]=="turnoff":
                 self.turnOff()
+            #elif msg["action"]=="gopropoweron":
+            #    self.goproPowerOn()
+            #elif msg["action"]=="gopropoweroff":
+            #    self.goproPowerOff()
             else:
                 print(color.WARNING,"WARNING : no correct action found in socket json",color.ENDC)
         if "set" in msg:
@@ -264,6 +283,10 @@ class OpenPathViewServer(threading.Thread):
         
 if __name__ == "__main__":
     os.system("clear")
+    # GPIO Test (Quentin)
+    gpio.setmode(gpio.BCM)
+    #gpio.setup(26, gpio.OUT, initial = gpio.HIGH)
+
     server=OpenPathViewServer()    
     try:
         server.start()
