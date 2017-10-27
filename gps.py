@@ -147,27 +147,25 @@ class Gps(object):
                     except UnicodeDecodeError:
                         data = ""
                     msg=msg[msg.find(END)+len(END):]
-                    #os.system("echo '{0}' >> track_full".format(data))
+                    os.system("echo '{0}' >> track_full".format(data))
                     data = data.split(",")
-
                     if data[0] == "$GPGGA":
-                        with open("log.txt","a") as f:
-                            f.writelines(str(data)+"\n")
                         if self.opvServer.config.get("GPS_DEBUG"):
                             print(data)
                         #$GGA,<time>,<lat>,<N/S>,<long>,<E/W>,<GPS-QUAL>,<satelite>,<hdop>,<alt>,<mode>,<otherthing>
-                        self.sat = data[7]
-                        self.lat = (data[2]+data[3])
-                        self.lon = (data[4]+data[5])
-                        self.alt = data[9]
-                        self.time = data[1]
-                        self.hdop = data[8]
+                        self.data = data
+                        self.sat = self.data[7]
+                        self.lat = (self.data[2]+self.data[3])
+                        self.lon = (self.data[4]+self.data[5])
+                        self.alt = self.data[9]
+                        self.time = self.data[1]
+                        self.hdop = self.data[8]
 
                         lat,lon = self.last_coord
                         distance = self.calculateDist(lat,lon)
-                        if distance >= DIST_TRIGGER:
-                            self.last_coord = self.getDegCoord()
-                            os.system("""echo "%f; %f" >> track"""%(self.last_coord[0],self.last_coord[1]))
+                        #if distance >= DIST_TRIGGER:
+                        self.last_coord = self.getDegCoord()
+                        os.system("""echo "%f; %f" >> track"""%(self.last_coord[0],self.last_coord[1]))
 
 
                     if data[0]=="$GNGGA" and len(data) >= 10:#If the object contain the right data
@@ -184,9 +182,9 @@ class Gps(object):
 
                         lat,lon = self.last_coord
                         distance = self.calculateDist(lat,lon)
-                        if distance >= DIST_TRIGGER:
-                            self.last_coord = self.getDegCoord()
-                            os.system("""echo "%f; %f" >> track"""%(self.last_coord[0],self.last_coord[1]))
+                        #if distance >= DIST_TRIGGER:
+                        self.last_coord = self.getDegCoord()
+                        os.system("""echo "%f; %f" >> track"""%(self.last_coord[0],self.last_coord[1]))
 
     def getDataDict(self):
         """

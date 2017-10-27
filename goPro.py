@@ -25,22 +25,22 @@ class GoPro(threading.Thread):
 
         if not self.opvServer.config.get("FAKE_MODE"):
             self.arduino = serial.Serial(ARDUINO_SERIAL)
-            self.arduino.readline()
+            #self.arduino.readline() # TODO
         else:
             self.arduino = None
-        
+
         self.takePhotoNow = threading.Event()
-        
+
         self.arduinoReady = threading.Event()
         self.arduinoReady.set()
-        
+
         self.opvServer = opvServer
         self.keepAlive = threading.Event()
 
         self.start()
         print(color.OKGREEN+"GoPro server initialized",color.ENDC)
 
-            
+
     def __del__(self):
         """
         destructor
@@ -53,23 +53,20 @@ class GoPro(threading.Thread):
         """
         if self.opvServer.config.get("FAKE_MODE"):
             return 1
-        
 
-        self.turnOff()
-        time.sleep(4)
         self.arduinoReady.wait()
-        self.arduinoReady.clear()        
-        self.arduino.write(b"I") #turn the GoPro on
+        self.arduinoReady.clear()
+        self.arduino.write(b"I")  # turn the GoPro on
         try:
             while self.arduino.readline()!=b'ON\r\n':
-                time.sleep(1)
-            
+                time.sleep(0.05)
+
             if self.opvServer:                             #tell the user the goPro just turned on (used for the old way)
                 if self.takePhotoNow.isSet():
                     self.opvServer.canMove()
             else:
                 print("Camera on")
-            time.sleep(3)
+            time.sleep(5)
             self.arduinoReady.set()
             self.changeMode()
             time.sleep(2)
@@ -79,25 +76,25 @@ class GoPro(threading.Thread):
             else:
                 print(color.FAIL+"GoPro failed to turn on",color.ENDC)
                 return 0
-                
+
         except serial.SerialException as e:
             print(e)
             self.arduinoReady.set()
             return 0
-            
-            
+
+
     def pingChecking(self):
         """
         check that all camera are connected by pinging them
         """
-        
+
         fail_list = self.ping(EYEFI_IP)
         if fail_list:
             print(color.WARNING+"SOME CARD DIDN'T ANSWER, NEW PING SESSION",color.ENDC)
             error = self.ping(fail_list)
         else:
             error = None
-        
+
         if error:
             print(color.FAIL+"ALL THOSE IP FAILED TO PING TWICE:",color.ENDC)
             for ip in error:
@@ -107,8 +104,8 @@ class GoPro(threading.Thread):
             return 1
 
         print(color.ENDC,end="")
-            
-        
+
+
     def turnOff(self):
         """
         turn all GoPro off
@@ -117,24 +114,24 @@ class GoPro(threading.Thread):
             return 1
         self.arduinoReady.wait()
         self.arduinoReady.clear()
-        
+
         try:
             self.arduino.write(b"I") #turn the GoPro on
             while self.arduino.readline()!=b'ON\r\n':
                 time.sleep(1)
-            self.arduino.write(b"O") #turn the GoPro off        
+            self.arduino.write(b"O") #turn the GoPro off
             while self.arduino.readline()!=b"OFF\r\n":
                 time.sleep(1)
             self.arduinoReady.set()
             print(color.OKBLUE+"GoPro off",color.ENDC)
             return 1
-            
+
         except serial.SerialException as e:
             print(color.FAIL+str(e),color.ENDC)
             self.arduinoReady.set()
             return 0
 
-    
+
     def changeMode(self):
         """
         change all GoPro mode
@@ -148,11 +145,11 @@ class GoPro(threading.Thread):
             while self.arduino.readline()!=b'PHOTO_MODE\r\n':
                 time.sleep(1)
             print(color.OKBLUE+"GoPro mode changed",color.ENDC)
-        
+
         except serial.SerialException as e:
             print(e)
-        self.arduinoReady.set()                
-        
+        self.arduinoReady.set()
+
     def stop(self):
         """
         stop the thread
@@ -160,7 +157,7 @@ class GoPro(threading.Thread):
         print(color.OKBLUE+"Stopping GoPro Thread...",color.ENDC)
         self.keepAlive.clear()
         print(color.OKGREEN+"GoPro Thread stopped",color.ENDC)
-        
+
     def run(self):
         """
         a thread takin picture when needed
@@ -168,11 +165,11 @@ class GoPro(threading.Thread):
         self.keepAlive.set()
         while self.keepAlive.isSet():
             self.takePhotoNow.wait()#wait for the server to ask for a picture
-            if not self.opvServer.config.get("FAKE_MODE"):               
-                self.arduinoReady.wait()        
-                self.__takePhoto()                
+            if not self.opvServer.config.get("FAKE_MODE"):
+                self.arduinoReady.wait()
+                self.__takePhoto()
             self.takePhotoNow.clear()
-                        
+
     def __takePhoto(self,force = False):
         """
         private way to take photo (new way)
@@ -183,20 +180,21 @@ class GoPro(threading.Thread):
         if not force:
             assert self.arduinoReady.isSet()
             assert self.takePhotoNow.isSet()
+        # start = time.time()
         self.arduino.write(b"T") #turn the GoPro on
         try:
             answer = b''
             while answer not in (b'ERROR\r\n',b'TAKEN\r\n'):
-                time.sleep(1)
                 answer = self.arduino.readline()
             if answer == b'TAKEN\r\n':
+                # print((time.time() - start))
                 print(color.OKGREEN+"GoPro took photo",color.ENDC)
                 if self.opvServer:
                     self.opvServer.statut(True) #tell the opvServer the picTaking succed
                 else:
                     print("Pic taking succed")
                 return 1
-                    
+
             elif answer == b'ERROR\r\n':
                 print(color.FAIL+"GoPro failed to take photo",color.ENDC)
                 fail=self.arduino.readline().decode("ascii")
@@ -207,31 +205,66 @@ class GoPro(threading.Thread):
                 if self.opvServer:
                     self.opvServer.statut(False,goProFailed=fail) #tell the opvServer the picTaking failed
                 else:
-                    print("Pic taking failed")                    
+                    print("Pic taking failed")
                 return 0
 
         except serial.SerialException as e:
             print(e)
-            
-   
+
+
     def takePhoto(self):
         """
         ask all device to take a picture
-        """        
+        """
         if self.takePhotoNow.isSet():
             return 0
         else:
             self.takePhotoNow.set()
-            return 1       
-        
-        
+            return 1
+
+    # def rafale(self):
+    #     """
+    #     Takes 10 pictures.
+    #     Only for test purposes.
+    #     """
+    #     self.arduino.write(b"R") #turn the GoPro on
+    #     takenCount = 0
+    #     try:
+    #         answer = b''
+    #         while answer not in (b'ERROR\r\n',b'TAKEN\r\n'):
+    #             time.sleep(1)
+    #             answer = self.arduino.readline()
+    #         if answer == b'TAKEN\r\n':
+    #             print(color.OKGREEN+"GoPro took photo",color.ENDC)
+    #             if self.opvServer:
+    #                 self.opvServer.statut(True) #tell the opvServer the picTaking succed
+    #             else:
+    #                 print("Pic taking succed")
+    #             return 1
+    #
+    #         elif answer == b'ERROR\r\n':
+    #             print(color.FAIL+"GoPro failed to take photo",color.ENDC)
+    #             fail=self.arduino.readline().decode("ascii")
+    #             for i in range(6):
+    #                 if fail[i] == "1":
+    #                     print("GoPro "+str(5-i)+" failed")
+    #
+    #             if self.opvServer:
+    #                 self.opvServer.statut(False,goProFailed=fail) #tell the opvServer the picTaking failed
+    #             else:
+    #                 print("Pic taking failed")
+    #             return 0
+    #
+    #     except serial.SerialException as e:
+    #         print(e)
+
     def ping(self,ipList):
         """
         ping all ip in the list and tell wich one doesn't answer
         """
         error = []
 
-        for ip in ipList:            
+        for ip in ipList:
             if not subprocess.call("ping -c 1 "+ip,shell=True):
                 print(color.OKGREEN+str(ip),"CONNECTED : OK",color.ENDC)
             else:
@@ -247,7 +280,7 @@ if __name__=="__main__":
         print(color.OKGREEN+"Allumage OK")
     else:
         print(color.FAIL+"Allumage PAS OK")
-        
+
 #    goPro.changeMode()
 #    time.sleep(1)
 
@@ -259,5 +292,3 @@ if __name__=="__main__":
         print(color.OKGREEN+"Extinction OK")
     else:
         print(color.FAIL+"Extinction PAS OK")
-
-
