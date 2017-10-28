@@ -78,6 +78,9 @@ void GoPro_takePic(){                //take picture
     digitalWrite(GOPRO_TRIG, LOW); //take pic
     delayMicroseconds(340);
     digitalWrite(GOPRO_TRIG, HIGH);
+    
+    delay(1825); // waiting 1,5s timing for roller shutter + saving on memory card, pifometre
+    
     Serial.println("TAKEN");
 } 
 
@@ -117,7 +120,7 @@ void setup() {
     // ID3 High to say we are going to control the camera, set this low when finished controlling the camera
     digitalWrite(GOPRO_ID3, HIGH); //May take a photo
     
-    delay(1500);
+    delay(300);
 //    Serial.println("Begining to take photos");
     
 }
@@ -139,6 +142,14 @@ void loop() {
     }
     else if(lastChar == 'T'){
       GoPro_takePic();
+    }
+    else if(lastChar == 'R'){
+      unsigned long time = millis();
+      for(int i = 0; i  < 20 ; i++){
+        GoPro_takePic();
+      }
+      //Serial.println("All shoot timing : ");
+      //Serial.println(millis() - time);
     }
     else if(lastChar == 'M'){
       GoPro_setMode();
