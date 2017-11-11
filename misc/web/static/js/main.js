@@ -16,6 +16,7 @@ var ws = new function(){
     this.ws = null;
     this.userPos = L.marker([0,0], {icon: posIcon});
     var thatUserPos = this.userPos;
+    var chrono =  null;
 
     this.openSocket = function(){
         this.ws = new WebSocket(qs("#ws_url").value, "chat");
@@ -23,7 +24,7 @@ var ws = new function(){
         this.ws.onopen = function(e){
             //console.log("WebSocket opened, event :");
             //console.log(e);
-            qs("#connectionInfos").style.display = "none";    
+            qs("#connectionInfos").style.display = "none";
             qs("#controles").style.display = null;
 
             this.map = L.map('map').setView([48.41416, -4.47197], 13);
@@ -36,6 +37,9 @@ var ws = new function(){
             // TODO : add right attribution
             this.map.attributionControl.setPrefix(''); // Don't show the 'Powered by Leaflet' text. Attribution overload
             thatUserPos.addTo(this.map);
+
+            // pic timer
+            chrono = new Chrono(document.querySelector("#lastTakenChrono"));
         };
 
         this.ws.onerror = function(e){
@@ -51,17 +55,17 @@ var ws = new function(){
         this.ws.onclose = function(e){
             //console.log("WebSocket closed, event :");
             //console.log(e);
-            qs("#connectionInfos").style.display = null;    
+            qs("#connectionInfos").style.display = null;
             qs("#controles").style.display = "none";
             this.close();
             alert("WebSocket connexion closed");
         };
-        
+
         this.ws.onmessage = function(e){
             //console.log(e.data);
             var rep = JSON.parse(e.data);
             //console.log(rep);
-    
+
             if( rep.hasOwnProperty('pos') ){
                 qs("#lat").innerHTML=rep.pos.lat;
                 qs("#lon").innerHTML=rep.pos.long;
@@ -84,7 +88,7 @@ var ws = new function(){
             }
             else if(rep.hasOwnProperty('config')){
                 if (rep.auto == "True"){
-                    qs("#mode").value = rep.dist                                
+                    qs("#mode").value = rep.dist
                 }
                 else{
                     qs("#mode").value = 0
@@ -108,19 +112,19 @@ var ws = new function(){
     this.setAutoMode = function(){
         selectedDist = qs("#mode").value
         var data = { set: "automode", dist: selectedDist};
-        this.ws.send( JSON.stringify(data) );            
+        this.ws.send( JSON.stringify(data) );
     };
-    
+
     this.turnOn = function(){
         var data = { action: "turnon" };
-        this.ws.send( JSON.stringify(data) );                
+        this.ws.send( JSON.stringify(data) );
     };
 
     this.turnOff = function(){
         var data = { action: "turnoff" };
-        this.ws.send( JSON.stringify(data) );                
+        this.ws.send( JSON.stringify(data) );
     };
-  
+
     this.goProPowerOff = function(){
         var data = { action: "gopropoweroff" };
         this.ws.send( JSON.stringify(data) );
@@ -133,7 +137,7 @@ var ws = new function(){
 
     this.takePic = function(){
         var data = { action: "takepic" };
-        this.ws.send( JSON.stringify(data) );                
+        this.ws.send( JSON.stringify(data) );
     };
 
 }();
