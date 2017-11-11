@@ -254,7 +254,7 @@ class OpenPathViewServer(threading.Thread):
         while self.keepAlive.isSet():
             lat,lon,alt,rad = self.getLatLonAltRad()
             self.interfaces.setGeoInfo(lat,lon,alt,rad)
-            time.sleep(1)
+            time.sleep(0.05)
 
     def getLatLonAltRad(self):
         """

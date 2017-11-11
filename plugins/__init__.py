@@ -17,8 +17,8 @@ class Manager(object):
 
         self.interfaces.append(controlTerm.ControlTerm(self.opvServer))
         self.interfaces.append(pyWebSocket.WebSocketServer(self.opvServer))
-        self.interfaces.append(LiveViewServer.LiveViewServer(self.opvServer))        
-    
+        # self.interfaces.append(LiveViewServer.LiveViewServer(self.opvServer))
+
     def __iter__(self):
         """
         to allow the iteration, we only car about interfaces
@@ -74,7 +74,7 @@ class Manager(object):
         for i in self.interfaces:
             i.__del__()
 
-# Plugins must define the following methode : 
+# Plugins must define the following methode :
 # def notif(self,succes)
 # def newPanorama(self,succes=True,**kwargs)
 # def canMove(self)
@@ -83,6 +83,3 @@ class Manager(object):
 # def stop(self)
 # def __del__(self)
 # def __init__(self,opvServer)
-
-
-

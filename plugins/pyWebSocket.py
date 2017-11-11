@@ -10,7 +10,7 @@ class WebSocketServer(threading.Thread):
     """
     A server receiving connection for websocket
     """
-    
+
     def __init__(self,opvServer=None):
         """
         init the WebSocket Server, receiveHandler, if given, is called when a socket receive data with socket as first parameter and msg as second one
@@ -26,15 +26,15 @@ class WebSocketServer(threading.Thread):
                 picFile.readline()
                 for index,line in enumerate(picFile.readlines()):
                     try:
-                        line=line.split(";")                    
+                        line=line.split(";")
                         lat=line[1]
                         lon=line[2]
                         alt=line[3]
                         rad=line[4]
-                        msg = json.dumps({"pano" : {"lat": lat, "lon":lon, alt:alt, rad:rad}}, sort_keys=True) 
+                        msg = json.dumps({"pano" : {"succes": True, "lat": lat, "lon":lon, alt:alt, rad:rad}}, sort_keys=True)
                         self.panoramas.append(msg)
                     except Exception as e:
-                        print(color.WARNING,"WebSocket : Line %i malformed : %s"%(index,e),color.ENDC)            
+                        print(color.WARNING,"WebSocket : Line %i malformed : %s"%(index,e),color.ENDC)
         except Exception:
             print(color.WARNING,"WebSocket : File not found or malformed file",color.ENDC)
 
@@ -44,7 +44,7 @@ class WebSocketServer(threading.Thread):
         self.__webSock.bind(('', SOCKET_PORT))
         self.__webSock.listen(5)
         self.client = []
-        self.keepAlive = threading.Event()        
+        self.keepAlive = threading.Event()
         self.start()
         print(color.OKGREEN+"WebSocket : server initialized",color.ENDC)
 
@@ -61,7 +61,7 @@ class WebSocketServer(threading.Thread):
         print(color.OKBLUE+"WebSocket : Stopping thread...",color.ENDC)
         self.keepAlive.clear()
         print(color.OKGREEN+"WebSocket : Thread stopped",color.ENDC)
-    
+
     def run(self):
         """
         a thread receiving incoming websocket connection
@@ -82,13 +82,13 @@ class WebSocketServer(threading.Thread):
                         self.client.pop(len(self.client)-1)
                         break
 
-                    
+
     def setGeoInfo(self,lat,lon,alt,rad):
         """
         notify the user of geographical position
         """
-        msg = json.dumps({"pos":{"lat":lat, "long":lon, "alt":alt, "rad":rad.replace("°"," deg")}}, sort_keys=True) 
-        self.send2All(msg) 
+        msg = json.dumps({"pos":{"lat":lat, "long":lon, "alt":alt, "rad":rad.replace("°"," deg")}}, sort_keys=True)
+        self.send2All(msg)
 
     def setModeInfo(self,isAutoModeOn,dist):
         """
@@ -97,7 +97,7 @@ class WebSocketServer(threading.Thread):
         msg = json.dumps({"config":{"auto":str(isAutoModeOn),"dist":dist}}, sort_keys=True)
         self.send2All(msg)
 
-    def newPanorama(self,succes=True,**kwargs):
+    def newPanorama(self,succes=True, goProFailed=None, **kwargs):
         """
         notify the user of new panorama taking
         """
@@ -106,10 +106,10 @@ class WebSocketServer(threading.Thread):
             lon = kwargs["longitude"]
             alt = kwargs["altitude"]
             rad = kwargs["heading"]
-            msg = json.dumps({ "pano" : { "lat": lat, "lon":lon, "alt":alt, "rad":rad }}, sort_keys=True)
+            msg = json.dumps({ "pano" : { "succes": succes, "lat": lat, "lon":lon, "alt":alt, "rad":rad }}, sort_keys=True)
             self.send2All(msg)
         else:
-            msg = json.dumps({"pano" : "null"}, sort_keys=True)
+            msg = json.dumps({"pano" : { "succes": succes, "goProFailed": goProFailed } }, sort_keys=True)
             self.send2All(msg)
 
     def notif(self,succes):
@@ -124,7 +124,7 @@ class WebSocketServer(threading.Thread):
         notify the user that he can move
         """
         pass
-    
+
     def send2All(self,msg):
         """
         send a message to all opened client webSocket
@@ -133,18 +133,18 @@ class WebSocketServer(threading.Thread):
             try:
                 client.send(msg)
             except socket.error :
-                self.client.pop(index)    
+                self.client.pop(index)
 
 class WebSocketClient(threading.Thread):
     """
     A single connection (client) of the program
     """
-    
+
     def __init__(self, sock, addr, receiveHandler=None):
         """
         init the client connection
         if given, receivHandler will be called when the socket received a message
-        """        
+        """
         threading.Thread.__init__(self)
         self.daemon = True
         self.__sock = sock
@@ -154,7 +154,7 @@ class WebSocketClient(threading.Thread):
         self.handshake()
         self.receiveHandler = receiveHandler
         self.start()
-        
+
     def handshake(self):
         """
         handshake the client
@@ -166,16 +166,16 @@ class WebSocketClient(threading.Thread):
         for i in data:
             if "Sec-WebSocket-Key" in i:
                 break
-                
+
         i = i.encode("ascii")+b"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
-        hasher = hashlib.sha1()        
+        hasher = hashlib.sha1()
         key1 = i[len("Sec-WebSocket-Key: "):]
-        hasher.update(key1)        
+        hasher.update(key1)
         key = base64.b64encode(hasher.digest()).decode("utf-8")
         handshake = "HTTP/1.1 101 Web Socket Protocol Handshake\r\nUpgrade: WebSocket\r\nConnection: Upgrade\r\nSec-WebSocket-Protocol: chat\r\nSec-WebSocket-Accept: "+str(key)+"\r\n\r\n"
         print("WebSocket : ",handshake)
         self.__sock.send(handshake.encode())
-        
+
     def run(self):
         """
         keep receiving data from the webSocket
@@ -190,10 +190,10 @@ class WebSocketClient(threading.Thread):
         """
         Send a message to this client
         """
-        
+
         bytesFormatted=bytearray()
         bytesFormatted.append(129)
-        
+
         indexStartRawData = -1
 
         if len(msg) <= 125:
@@ -221,7 +221,7 @@ class WebSocketClient(threading.Thread):
         # put raw data
         for val in msg:
             bytesFormatted.append(ord(val))
-            
+
         self.__sock.send(bytesFormatted)
 
     def __onreceive(self, data):
@@ -236,9 +236,9 @@ class WebSocketClient(threading.Thread):
 
         if length == 126: # the lenght is coded on two more bytes
             indexFirstMask = 4
-        elif length == 127: # the lenght is coded on eight more bytes 
-            indexFirstMask = 10 
-            
+        elif length == 127: # the lenght is coded on eight more bytes
+            indexFirstMask = 10
+
         masks = data[indexFirstMask:indexFirstMask+4] # four bytes starting from indexFirstMask
 
         indexFirstDataByte = indexFirstMask + 4 # four bytes further
@@ -249,39 +249,21 @@ class WebSocketClient(threading.Thread):
         for i in range(indexFirstDataByte,len(data)):
             unmasked = data[i]^masks[j%4] # the ^ is a xor
             decoded+=chr(unmasked)
-            j+=1                        
-        
+            j+=1
+
         self.__receivedData.append(decoded)
         if self.receiveHandler:
             self.receiveHandler(self,decoded)
         else:
             print("WebSocket : ",decoded)
-        
+
     def getData(self):
         """
         return the elder received data
         """
         return self.__receivedData.pop(0)
-        
-        
+
+
 if __name__=="__main__":
     webSocketServer = WebSocketServer()
     webSocketServer.join()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        

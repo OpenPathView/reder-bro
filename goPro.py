@@ -186,6 +186,7 @@ class GoPro(threading.Thread):
             answer = b''
             while answer not in (b'ERROR\r\n',b'TAKEN\r\n'):
                 answer = self.arduino.readline()
+                #print(color.OKBLUE+" Answer : "+str(answer), color.ENDC)
             if answer == b'TAKEN\r\n':
                 # print((time.time() - start))
                 print(color.OKGREEN+"GoPro took photo",color.ENDC)

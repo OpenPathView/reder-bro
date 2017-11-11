@@ -4,7 +4,7 @@
         <title>OPV Mobile Controler</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
-        <link rel="stylesheet" href="static/css/bootstrap.min.css" />        
+        <link rel="stylesheet" href="static/css/bootstrap.min.css" />
         <link rel="stylesheet" href="static/css/leaflet.css" />
         <link rel="stylesheet" href="static/css/main.css" />
 
@@ -54,7 +54,7 @@
                     </table>
 
                     <div id="settings">
-                        <p>Mode : 
+                        <p>Mode :
                             <select class="form-control" id="mode" onchange="ws.setAutoMode()">
                                 <option value = "0">0ff</option>
                                 <option value = "1">1</option>
@@ -68,7 +68,7 @@
                                 <option value = "30">30</option>
                                 <option value = "35">35</option>
                                 <option value = "30">30</option>
-                                <option value = "35">35</option>                
+                                <option value = "35">35</option>
                                 <option value = "40">40</option>
                                 <option value = "45">45</option>
                                 <option value = "50">50</option>
@@ -86,7 +86,7 @@
                             <button class="btn btn-default" type="button" onclick="ws.goProPowerOff()">GoPro power Off</button>
                         </div>
                         <button class="btn btn-default" type="button" onclick="ws.takePic()">Take picture</button>
-                    </div>            
+                    </div>
                 </div>
             </div>
 
@@ -95,6 +95,25 @@
             </div>
 
         </div>
+
+        <div>
+            Time since last picture : <span id="lastTakenChrono"></span>
+            <button class="btn btn-default" type="button" onclick="ws.chrono.toggle()">Stop/Start</button>
+            <button class="btn btn-default" type="button" onclick="ws.chrono.reset()">Reset</button>
+            <input type="text" value="5000" id="timeToAlert">
+        </div>
+
+        <div id="logs" style="height:200px; overflow: scroll;">
+        </div>
+        <button class="btn btn-default" type="button" onclick="document.querySelector('#logs').innerHTML=''">Clear</button>
+
+        <audio id="audioPlayer">
+            <source src="static/hey.mp3">
+        </audio>
+
+        <script type="text/javascript">
+            notify("Rederbro is up");
+        </script>
 
     </body>
 </html>

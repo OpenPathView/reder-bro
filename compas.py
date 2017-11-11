@@ -14,9 +14,12 @@ class Compas:
     
 
         if not self.opvServer.config.get("FAKE_MODE"):
-            self.__hmc5883l = i2c_hmc5883l.i2c_hmc5883l(1)
-            self.__hmc5883l.setContinuousMode()
-            self.__hmc5883l.setDeclination(9,54) #used to correct default due to the geometry of earth magnetic field
+            try:
+                self.__hmc5883l = i2c_hmc5883l.i2c_hmc5883l(1)
+                self.__hmc5883l.setContinuousMode()
+                self.__hmc5883l.setDeclination(9,54) #used to correct default due to the geometry of earth magnetic field
+            except OSError:
+                print("fake compass")
         
 #    # To get degrees and minutes into variables
 #    (degrees, minutes) = hmc5883l.getDeclination()
@@ -28,7 +31,8 @@ class Compas:
         """
         if self.opvServer.config.get("FAKE_MODE"):
             return "404°42"
-        return self.__hmc5883l.getHeadingString()
+        return "404°42"
+        #return self.__hmc5883l.getHeadingString()
         
     def getDeclination(self): 
         """
@@ -36,7 +40,8 @@ class Compas:
         """
         if self.opvServer.config.get("FAKE_MODE"):
             return "404°42"
-        return self.__hmc5883l.getDeclinationString()
+        return "404°42"
+        #return self.__hmc5883l.getDeclinationString()
         
 if __name__ == "__main__":
     import time
