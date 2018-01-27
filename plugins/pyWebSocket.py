@@ -97,6 +97,11 @@ class WebSocketServer(threading.Thread):
         msg = json.dumps({"config":{"auto":str(isAutoModeOn),"dist":dist}}, sort_keys=True)
         self.send2All(msg)
 
+    def setBatteryInfo(self, battery_voltage):
+        """Notify the user of battery voltage."""
+        msg = json.dumps({"battery": battery_voltage})
+        self.send2All(msg)
+
     def newPanorama(self,succes=True, goProFailed=None, **kwargs):
         """
         notify the user of new panorama taking

@@ -60,6 +60,11 @@ class Manager(object):
         for i in self.interfaces:
             i.setModeInfo(isAutoModeOn,dist)
 
+    def setBatteryInfo(self, battery_voltage):
+        """Set Battery voltage."""
+        for i in self.interfaces:
+            i.setBatteryInfo(battery_voltage)
+
     def stop(self):
         """
         stop the interface

@@ -25,15 +25,17 @@ class ControlTerm(threading.Thread):
         self.alt = -42
         self.rad = 0
 
+        self.battery_volatge = 0
+
         #init all the curses stuff
         self.stdscr = curses.initscr()  #the terminal window
         curses.noecho()                 #don't show the pressed key
         curses.cbreak()                 #don't wait for enter to get pressed key
         curses.nonl()                   #allow to get the enter key press
-        self.stdscr.keypad(1)           #something... see internet, I forgot what it is for, but it's usefull, I think        
+        self.stdscr.keypad(1)           #something... see internet, I forgot what it is for, but it's usefull, I think
         self.stdscr.clear()             #clear the screen
         curses.curs_set(0)              #hide cursor
-        
+
         curses.start_color()            #enable colors and init them so we can convert ansi color to curses colors
         curses.init_pair(1, curses.COLOR_YELLOW, curses.COLOR_BLACK)
         curses.init_pair(2, curses.COLOR_BLUE, curses.COLOR_BLACK)
@@ -44,7 +46,7 @@ class ControlTerm(threading.Thread):
         color.OKBLUE[-3:]:curses.color_pair(2),
         color.OKGREEN[-3:]:curses.color_pair(3),
         color.WARNING[-3:]:curses.color_pair(1),
-        color.FAIL[-3:]:curses.color_pair(5),        
+        color.FAIL[-3:]:curses.color_pair(5),
         color.ENDC[-3:]:curses.color_pair(0)}
         self.lastUsedColor = curses.color_pair(0)
 
@@ -71,7 +73,7 @@ class ControlTerm(threading.Thread):
         """
         self.dispBuffer += txtToWrite
         self.flush()
-        
+
     def flush(self):
         """
         flush the buffered data to the screen
@@ -95,8 +97,8 @@ class ControlTerm(threading.Thread):
         self.commandArea.keypad(0)
         curses.echo()
         curses.nl()
-        curses.endwin()    
-        print(color.WARNING+"ControlTerm : destroying",color.ENDC)        
+        curses.endwin()
+        print(color.WARNING+"ControlTerm : destroying",color.ENDC)
 
     def stop(self):
         """
@@ -110,12 +112,12 @@ class ControlTerm(threading.Thread):
         """
         main loop, get keyboard event and communicate with the opvServer
         """
-        self.keepAlive.set()        
+        self.keepAlive.set()
         history = [""]       # history while be 50 element long
         cmdBackUp = ""
         cursorPos = 0
         index = len(history)-1    #last history element is the actual command
-        t = self.commandArea.getch(0, cursorPos)            
+        t = self.commandArea.getch(0, cursorPos)
         self.commandArea.addch(0,cursorPos,t)
         self.commandArea.refresh()
         while self.keepAlive.isSet():
@@ -163,20 +165,20 @@ class ControlTerm(threading.Thread):
                 if cursorPos>len(history[-1]):
                     cursorPos = len(history[-1])
                 if cursorPos<0:
-                    cursorPos = 0                    
-            elif key == 13: # curses.KEY_ENTER doesn't work, but 13 does...                
+                    cursorPos = 0
+            elif key == 13: # curses.KEY_ENTER doesn't work, but 13 does...
                 self.commandHandler(history[-1])
                 history.append("")
                 if len(history)>50:
                     history.pop(0)
                 index = len(history)-1
                 cursorPos = 0
-            else:                
+            else:
                 history[-1] = history[-1][:cursorPos]+chr(key)+history[-1][cursorPos:]
                 cursorPos +=1
-            self.commandArea.clear()    
+            self.commandArea.clear()
             try:
-                self.commandArea.addstr(history[-1])                    
+                self.commandArea.addstr(history[-1])
             except Exception as e:
                 print(color.WARNING,e,"with string : ",history[-1],color.END)
             self.commandArea.chgat(0,cursorPos,1,curses.A_REVERSE)
@@ -190,7 +192,7 @@ class ControlTerm(threading.Thread):
         if len(command)==0:
             print("ControlTerm : No message")
         else:
-            cmd = command[0]            
+            cmd = command[0]
             if cmd == "quit":
                 self.opvServer.stop()
             elif cmd == "clear":
@@ -204,6 +206,8 @@ class ControlTerm(threading.Thread):
                 print(color.ENDC+"ControlTerm : ping",color.ENDC)
             elif cmd == "geoinfo":
                 print("lat :",self.lat,"lon :",self.lon,"alt :",self.alt,"compas :",self.rad)
+            elif cmd == "bat":
+                print("Battery voltage : ",self.battery_volatge)
             elif cmd == "turnoff":
                 if self.opvServer:
                     self.opvServer.turnOff()
@@ -218,7 +222,7 @@ class ControlTerm(threading.Thread):
                 if self.opvServer:
                     self.opvServer.takePic()
                 else:
-                    print("ControlTerm : Take pic")                
+                    print("ControlTerm : Take pic")
             elif cmd == "auto":
                 if len(command) >= 2:
                     try:
@@ -242,6 +246,7 @@ class ControlTerm(threading.Thread):
                     "turnOn      : turn all GoPro On\n"
                     "turnOff     : turn all GoPro Off\n"
                     "geoInfo     : display geolocalisation information\n"
+                    "bat         : display battery voltage\n"
                     "ping        : try it\n"
                     "clear       : clear the screen\n"
                     "help        : display this help\n"
@@ -272,6 +277,10 @@ class ControlTerm(threading.Thread):
         """
         #same here, we could display that in a notification barre
         pass
+
+    def setBatteryInfo(self, battery_volatge):
+        """Notify the user of battery voltage."""
+        self.battery_volatge = battery_volatge
 
     def notif(self,succes):
         """

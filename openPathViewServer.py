@@ -2,10 +2,12 @@
 
 import RPi.GPIO as gpio
 
-import threading, time
 import os
 import sys
 import json
+import time
+import battery
+import threading
 
 sys.path.append(os.path.realpath(__file__)[:os.path.realpath(__file__).rfind("/")]+"/includes")
 sys.path.append(os.path.realpath(__file__)[:os.path.realpath(__file__).rfind("/")]+"/includes/quick2wire-python-api/")
@@ -42,14 +44,13 @@ class OpenPathViewServer(threading.Thread):
 
         self.configOnOffLock = threading.Lock()
 
-
-
-        self.gps = gps.Gps(self,"/dev/ttyAMA0",baudrate=115200)
-        #self.gps = gps.Gps(self,"/dev/ttyAMA0",baudrate=9600)
+        self.gps = gps.Gps(self, "/dev/ttyAMA0", baudrate=115200)
+        # self.gps = gps.Gps(self,"/dev/ttyAMA0",baudrate=9600)
         self.lastLatLon = self.gps.getDegCoord()
 
         self.compas = compas.Compas(self)
         self.gopro = goPro.GoPro(self)
+        self.battery = battery.Battery(self)
 
         self.interfaces = Manager(self)
 
@@ -140,7 +141,6 @@ class OpenPathViewServer(threading.Thread):
         """
         gpio.output(26, gpio.LOW)
 
-
     def statut(self,succes,goProFailed="000000"):
         """
         act depending of the succes of photo taking
@@ -154,7 +154,8 @@ class OpenPathViewServer(threading.Thread):
             self.interfaces.newPanorama(True,latitude=lat,longitude=lon,altitude=alt,heading=rad)
         else:
             self.interfaces.newPanorama(False,goProFailed = goProFailed)
-        os.system("""echo "%s; %f; %f; %s; %s; %s" >> picturesInfo.csv"""%(time.asctime(),lat,lon, alt, rad, goProFailed))
+
+        os.system("""echo "{}; {:f}; {:f}; {:f}; {}; {}" >> picturesInfo.csv""".format(time.asctime(), lat, lon, alt, rad, goProFailed))
 
     def canMove(self):
         """
@@ -213,11 +214,10 @@ class OpenPathViewServer(threading.Thread):
         will be called by socket when they receiving a message
         """
 
-
         try:
             msg = json.loads(msg)
         except ValueError:
-            print(color.FAIL,"Error decoding json from socket",color.ENDC)
+            print(color.FAIL, "Error decoding json from socket", color.ENDC)
             return
 
         if "action" in msg:
@@ -253,7 +253,9 @@ class OpenPathViewServer(threading.Thread):
         """
         while self.keepAlive.isSet():
             lat,lon,alt,rad = self.getLatLonAltRad()
+            battery_volatge = self.battery.getBatteryVoltage()
             self.interfaces.setGeoInfo(lat,lon,alt,rad)
+            self.interfaces.setBatteryInfo(battery_volatge)
             time.sleep(0.05)
 
     def getLatLonAltRad(self):

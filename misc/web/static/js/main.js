@@ -166,6 +166,7 @@ var ws = new function(){
                 qs("#lon").innerHTML=rep.pos.long;
                 qs("#alt").innerHTML=rep.pos.alt;
                 qs("#rad").innerHTML=rep.pos.rad;
+
                 var valideData = false;
                 var latlng;
                 try{
@@ -206,6 +207,9 @@ var ws = new function(){
                 if(rep.succes=="false"){
                     alert("echec du serveur")
                 }
+            }
+            else if(rep.hasOwnProperty('battery')){
+                qs("#battery").innerHTML=rep.battery;
             }
             // TODO : Add information about failling camera : vibration or sound
 
