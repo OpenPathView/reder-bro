@@ -5,7 +5,7 @@ import time
 
 try:
     import RPi.GPIO as GPIO
-except:
+except Exception:
     pass
 
 
@@ -44,6 +44,7 @@ class GoproServer(Worker):
 
                     else:
                         if full:
+                            time.sleep(0.5)
                             error = self.changeMode(force=True)
 
                             if error:
@@ -156,7 +157,7 @@ class GoproServer(Worker):
             error, answer = self.arduino.waitAnswer("ID1s")
             errorNB += 1 if error else 0
 
-            goproFail = [(), "000000"]
+            goproFail = [[], "000000"]
             if error:
                 error, answer = self.arduino.waitAnswer("")
                 goproFail[1] = answer
@@ -190,8 +191,8 @@ class GoproServer(Worker):
             # init arduino
             self.arduino = SerialManager(self.config, self.logger, "arduino")
             self.clear()
-        except:
-            self.logger.error("Can't connect to arduino")
+        except Exception as e:
+            self.logger.error("Can't connect to arduino ({})".format(e))
             self.setFakeMode("on")
 
         try:
@@ -199,8 +200,8 @@ class GoproServer(Worker):
             GPIO.setmode(GPIO.BCM)
             GPIO.setwarnings(False)
             GPIO.setup(self.config["relay_pin"], GPIO.OUT)
-        except:
-            self.logger.error("Not on a rpi")
+        except Exception as e:
+            self.logger.error("Not on a rpi ({})".format(e))
             if not self.fakeMode:
                 self.setFakeMode("on")
 

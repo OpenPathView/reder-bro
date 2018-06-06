@@ -12,7 +12,7 @@ class SerialManager():
 
         try:
             self.serial = serial.Serial(config[serialName]["serial"], timeout=0.5, baudrate=config[serialName]["baudrate"])
-        except:
+        except Exception:
             self.serial = serial.Serial(config[serialName]["serial"], timeout=0.5)
 
         self.time_out = config[serialName]["time_out"]

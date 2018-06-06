@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from docopt import docopt
 from rederbro.utils.config import Config
 from rederbro.command.command import Command

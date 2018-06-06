@@ -1,10 +1,7 @@
 from rederbro.server.worker import Worker
 from rederbro.utils.serialManager import SerialManager
-import math
-from rederbro.command.command import Command
-import time
+from rederbro.utils.automode import Automode
 import zmq
-import threading
 
 
 class SensorsServer(Worker):
@@ -20,26 +17,23 @@ class SensorsServer(Worker):
 
         Auto mode will take a picture every self.distace meter.
         """
+        self.logger.info("Lets turn automode {}".format(state))
+        self.automode.stop()
+        if (state == "on"):
+            self.automode = Automode(self, self.distance, config=self.config)
+            self.automode.start()
+
         self.logger.info("Auto mode turned {}".format(state))
-        self.auto_mode = True if state == "on" else False
 
     def setDistance(self, distance):
         """
         Set distance between picture in auto mode.
 
-        This method don't turn on auto mode.
+        This method don't turn auto mode on.
         """
         self.distance = float(distance)
+        self.automode.setDistance(distance)
         self.logger.info("Distance between photo set to {}".format(self.distance))
-
-    def getDistance(self, cordA, cordB):
-        cordA = [float(math.radians(cordA[0])), float(math.radians(cordA[1]))]
-        cordB = [float(math.radians(cordB[0])), float(math.radians(cordB[1]))]
-
-        calc = (math.pi/2 - math.asin(math.sin(cordB[0]) * math.sin(cordA[0]) + math.cos(cordB[1] - cordA[1]) * math.cos(cordB[0]) * math.cos(cordA[0])))
-        distanceBetweenPoint = self.earth_radius * calc
-        self.logger.debug("Distance between now and last cord : {}".format(distanceBetweenPoint))
-        return distanceBetweenPoint
 
     def toDegCord(self):
         """
@@ -78,20 +72,17 @@ class SensorsServer(Worker):
         return 0, 0  # mean it didin't work
 
     def getHeading(self):
-        self.heading = 0
-        return 0
-
-    def alwaysCord(self):
-        while True:
-            self.getCord(log=False)
-            self.checkAutoMode()
-            time.sleep(self.config["gps"]["delay"])
+        self.heading = 0.0
+        return self.heading
 
     def getCord(self, log=True):
         if log:
             self.logger.info("Get cordonate")
         if self.fakeMode:
-            self.lastCord = [0, 0, 0]
+            self.lastCord = [0.0, 0.0, 0.0]
+            self.lastSat = 0
+            self.lastTime = 0.0
+            self.lastHdop = 0
             if log:
                 self.logger.info("Cordonate : {} (fake mode)".format(self.lastCord))
 
@@ -108,8 +99,8 @@ class SensorsServer(Worker):
             if not error:
                 # $GPGGA,<time>,<lat>,<N/S>,<lon>,<E/W>,<positionnement type>,<satelite number>,<HDOP>,<alt>,<other thing>
                 self.lastSat = answer[7]
-                self.lastCord = [answer[2]+answer[3], answer[4]+answer[5], answer[9]]
-                self.lastTime = answer[1]
+                self.lastCord = [answer[2]+answer[3], answer[4]+answer[5], float(answer[9])]
+                self.lastTime = float(answer[1])
                 self.lastHdop = answer[8]
 
                 self.toDegCord()
@@ -123,19 +114,9 @@ class SensorsServer(Worker):
 
         sensorsJson = {"lat": self.lastCord[0], "lon": self.lastCord[1], "alt": self.lastCord[2], "head": self.getHeading(), "time": self.lastTime}
         self.gps_infoPub.send_json(sensorsJson)
+        self.logger.debug("Data return from get cord : {}".format(sensorsJson))
 
         return sensorsJson
-
-    def checkAutoMode(self):
-        if self.auto_mode:
-            lastDistance = self.getDistance(self.lastPhotoCord, self.lastCord)
-            if lastDistance >= self.distance:
-                self.lastPhotoCord = self.lastCord
-                self.logger.info("Take picture (auto mode)")
-
-                msg = ("takepic", True)
-                cmd = Command(self.config, "gopro")
-                cmd.run(msg)
 
     def pollCall(self, poll):
         if self.gps_infoRep in poll:
@@ -147,11 +128,10 @@ class SensorsServer(Worker):
         Worker.__init__(self, config, "sensors")
 
         self.lastSat = 0
-        self.lastCord = [0, 0, 0]
-        self.lastPhotoCord = [0, 0, 0]
-        self.lastTime = 0
-        self.lastHdop = 0
-        self.heading = 0
+        self.lastCord = [0.0, 0.0, 0.0]
+        self.lastTime = 0.0
+        self.lastHdop = 0.0
+        self.heading = 0.0
 
         self.earth_radius = 6372.795477598 * 1000
 
@@ -173,15 +153,13 @@ class SensorsServer(Worker):
 
         self.poller.register(self.gps_infoRep, zmq.POLLIN)
 
-        self.distance = 5
-        self.auto_mode = False
-
         self.time_out = config["gps"]["time_out"]
 
         try:
             self.gps = SerialManager(self.config, self.logger, "gps")
-        except:
+        except Exception as e:
+            self.logger.info("Can't connect to gps ({})".format(e))
             self.setFakeMode("on")
 
-        cord = threading.Thread(target=self.alwaysCord)
-        cord.start()
+        self.distance = 5
+        self.automode = Automode(self, self.distance, config=self.config)

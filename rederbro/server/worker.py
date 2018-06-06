@@ -27,6 +27,7 @@ class Worker():
         stream_handler.setFormatter(formatter)
         self.logger.addHandler(stream_handler)
 
+        self.logger.info("-----------------------------------------------")
         self.logger.info("Connecting to main server")
         url = "tcp://{}:{}".format(self.config["server"]["server_url"], self.config["server"]["worker_server_port"])
         urlGPS = "tcp://{}:{}".format(self.config["gps"]["server_url"], self.config["gps"]["pub_server_port"])

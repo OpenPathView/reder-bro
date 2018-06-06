@@ -6,7 +6,7 @@
         "bind_address" : "*"
     },
     "arduino" : {
-      "serial":"/dev/ttyACM0",
+      "serial":"/dev/ttyUSB0",
       "time_out":10
     },
     "gps" : {
@@ -18,6 +18,11 @@
       "pub_server_port" : 8549,
       "rep_server_port" : 8550,
       "delay" : 0.25
+    },
+    "campaign" : {
+      "bind_url": "*",
+      "pub_server_port": 8551,
+      "rep_server_port": 8552
     },
     "relay_pin":26
 }

@@ -1,6 +1,7 @@
 from rederbro.server.worker import Worker
 import os
 import zmq
+import csv
 
 
 class CampaignServer(Worker):
@@ -24,6 +25,8 @@ class CampaignServer(Worker):
         with open(self.currentCampaignPath, "a") as csv:
             csv.write(text)
 
+        self.campaign_infoPub.send_json({"info": "Picture taken", "error": picInfo["goproFail"]})
+
     def newCampaign(self, args):
         self.attachCampaign(args)
 
@@ -35,6 +38,27 @@ class CampaignServer(Worker):
     def attachCampaign(self, args):
         self.currentCampaignPath = self.baseCampaignPath + args + ".csv"
         self.logger.info("Campaign attached to "+args)
+
+    def pollCall(self, poll):
+        if self.campaign_infoRep in poll:
+            self.campaign_infoRep.recv_json()
+            self.logger.info("Someone ask the campaign info")
+            rep = []
+
+            with open(self.currentCampaignPath) as file:
+                csvFile = csv.reader(file, skipinitialspace=True, delimiter=';')
+                csvFile = [row for row in csvFile]
+
+            fields = csvFile[0]
+            del csvFile[0]
+            for line in csvFile:
+                lineJson = {}
+                for i in range(len(fields)):
+                    lineJson[fields[i]] = line[i]
+                rep.append(lineJson)
+
+            self.logger.debug("Answer sent : {}".format(rep))
+            self.campaign_infoRep.send_json(rep)
 
     def __init__(self, config):
         # Use the __init__ of the server class
@@ -58,6 +82,14 @@ class CampaignServer(Worker):
         }
 
         urlGPS = "tcp://{}:{}".format(self.config["gps"]["server_url"], self.config["gps"]["rep_server_port"])
+
+        self.campaign_infoPub = self.context.socket(zmq.PUB)
+        self.campaign_infoPub.bind("tcp://{}:{}".format(self.config["campaign"]["bind_url"], self.config["campaign"]["pub_server_port"]))
+
+        self.campaign_infoRep = self.context.socket(zmq.REP)
+        self.campaign_infoRep.bind("tcp://{}:{}".format(self.config["campaign"]["bind_url"], self.config["campaign"]["rep_server_port"]))
+
+        self.poller.register(self.campaign_infoRep, zmq.POLLIN)
 
         self.gps_infoReq = self.context.socket(zmq.REQ)
         self.gps_infoReq.connect(urlGPS)
