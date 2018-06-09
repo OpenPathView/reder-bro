@@ -27,7 +27,7 @@ class Config():
                 ("fake", (True, "STATUS")),
                 ("", (True, "STATUS"))),
             "sensors": (
-                ("cord", (False, None)),
+                ("get", (False, None)),
                 ("debug", (True, "STATUS")),
                 ("fake", (True, "STATUS")),
                 ("automode", (True, "STATUS")),

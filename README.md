@@ -41,4 +41,5 @@ To fully use rederbro you should start all server. The easiest way to do that is
 Next you can use a tmux to see log.
 
 ## Android application
-You can control the application by using shell command, but the simplest way is to use the android application (not publish yet) to manage rederbro.
+You can control the application by using shell command, but the simplest way is to use the android application  to manage rederbro.
+[rederbro-controlApp](https://github.com/OpenPathView/rederbro-controlApp)

@@ -15,11 +15,11 @@ class Automode(Thread):
         Thread.__init__(self)
 
     def run(self):
-        self.lastCord = self.sensors.getCord()
+        self.lastCord = self.sensors.getSensors()
         self.takePic()
 
         while self.work:
-            cord = self.sensors.getCord(log=False)
+            cord = self.sensors.getSensors(log=False)
             distance = self.getDistance(self.lastCord, cord)
             self.sensors.logger.debug("Distance : {}".format(distance))
             if distance >= self.distance:

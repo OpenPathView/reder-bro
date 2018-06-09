@@ -8,23 +8,23 @@ from rederbro.command.serverCommand import ServerCommand
 __doc__ = """Open path view rederbro
 
 Usage:
-  opv server main on
-  opv server gopro on
-  opv server sensors on
-  opv server campaign on
-  opv gopro relay STATUS
-  opv gopro takepic
-  opv gopro clear
-  opv gopro STATUS
-  opv gopro debug STATUS
-  opv gopro fake STATUS
-  opv sensors debug STATUS
-  opv sensors fake STATUS
-  opv sensors automode STATUS
-  opv sensors distance METER
-  opv sensors cord
-  opv campaign new NAME
-  opv campaign attach NAME
+  rederbro server main on
+  rederbro server gopro on
+  rederbro server sensors on
+  rederbro server campaign on
+  rederbro gopro relay STATUS
+  rederbro gopro takepic
+  rederbro gopro clear
+  rederbro gopro STATUS
+  rederbro gopro debug STATUS
+  rederbro gopro fake STATUS
+  rederbro sensors debug STATUS
+  rederbro sensors fake STATUS
+  rederbro sensors automode STATUS
+  rederbro sensors distance METER
+  rederbro sensors get
+  rederbro campaign new NAME
+  rederbro campaign attach NAME
 
 Options:
   -h --help     Show this screen.
