@@ -2,3 +2,4 @@ docopt
 pyserial
 pyzmq
 Adafruit-ADS1x15
+RPi.GPIO

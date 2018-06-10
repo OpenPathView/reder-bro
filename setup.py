@@ -29,7 +29,8 @@ setup(
         "docopt",
         "pyserial",
         "pyzmq",
-        "Adafruit-ADS1x15"
+        "Adafruit-ADS1x15",
+        "RPi.GPIO"
     ],
     # Active la prise en compte du fichier MANIFEST.in
     include_package_data=True,

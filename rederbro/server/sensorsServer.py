@@ -82,7 +82,7 @@ class SensorsServer(Worker):
         if log:
             self.logger.info("Get battery voltage")
         if self.fakeMode:
-            self.battVoltage = 42
+            self.battVoltage = 42.0
             if log:
                 self.logger.info("Battery voltage : {} (fake mode)"
                                  .format(self.battVoltage))
