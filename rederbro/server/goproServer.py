@@ -13,16 +13,84 @@ class GoproServer(Worker):
     """
     """
     def clear(self):
+        """
+        Simply clear serial to arduino,
+        it can be useful if the arduino start after rederbro.
+        """
         if self.fakeMode:
             self.logger.info("Arduino serial cleared")
         else:
             self.arduino.clear()
 
-    def turnGopro(self, state, full=True):
+        return {
+            "msg": "Serial cleared"
+        }
+
+    def turnGoproOn(self, full=True):
         """
-        Switch gopro to state value
+        Turn all gopro on,
+        It ask arduino to do it
+        Turn full to True allow to put gopro in photo mode
+        """
+        error, answer = self.arduino.sendMsg("I", "ON")
+
+        if error:
+            self.logger.error("Failed to turn gopro on")
+            self.goproOn = False
+
+        else:
+            if full:
+                time.sleep(0.5)
+                error = self.changeMode(force=True)
+
+                if error:
+                    self.logger.error("Failed to turn gopro on")
+                    self.goproOn = False
+
+                else:
+                    self.logger.info("Gopro turned on (full mode)")
+                    self.goproOn = True
+
+            else:
+                self.logger.info("Gopro turned on (not full mode)")
+                self.goproOn = True
+
+        return {
+            "gopro": self.goproOn,
+            "error": error,
+            "fullmode": full
+        }
+
+    def turnGoproOff(self):
+        """
+        Turn all gopro off,
+        It ask arduino to do it
+        """
+        if not self.goproOn:
+            self.turnGoproOn(full=False)
+
+        error, answer = self.arduino.sendMsg("O", "OFF")
+
+        if error:
+            self.logger.error("Failed to turn gopro off")
+            self.goproOn = True
+
+        else:
+            self.logger.info("Gopro turned off")
+            self.goproOn = False
+
+        return {
+            "gopro": self.goproOn,
+            "error": error
+        }
+
+    def turnGopro(self, state):
+        """
+        Switch gopro to state value,
+        It manage if server is in fakemode or if relay is OFF
         """
         self.logger.info("Turn gopro {}".format(state))
+        answer = {}
 
         if self.relayOn:
             # relay must be on before switch on gopro
@@ -31,57 +99,26 @@ class GoproServer(Worker):
                 self.goproOn = state
                 self.logger.info("Turned gopro {} (fake mode)".format(state))
 
+                answer = {
+                    "gopro": self.goproOn,
+                    "error": False
+                }
+
             else:
-                # when fake mode is off
                 if state == "on":
-                    # turn on
-                    error, answer = self.arduino.sendMsg("I", "ON")
-
-                    if error:
-                        self.logger.error("Failed to turn gopro on")
-                        self.goproOn = False
-                        return self.goproOn
-
-                    else:
-                        if full:
-                            time.sleep(0.5)
-                            error = self.changeMode(force=True)
-
-                            if error:
-                                self.logger.error("Failed to turn gopro on")
-                                self.goproOn = False
-                                return self.goproOn
-
-                            else:
-                                self.logger.info("Gopro turned on (full mode)")
-                                self.goproOn = True
-                                return self.goproOn
-
-                        else:
-                            self.logger.info("Gopro turned on (not full mode)")
-                            self.goproOn = True
-                            return self.goproOn
-
+                    answer = self.turnGoproOn()
                 else:
-                    # turn off
-                    if not self.goproOn:
-                        self.turnGopro(True, full=False)
+                    answer = self.turnGoproOff()
 
-                    error, answer = self.arduino.sendMsg("O", "OFF")
-
-                    if error:
-                        self.logger.error("Failed to turn gopro off")
-                        self.goproOn = True
-                        return self.goproOn
-
-                    else:
-                        self.logger.info("Gopro turned off")
-                        self.goproOn = False
-                        return self.goproOn
         else:
             self.logger.error("Failed to change gopro status cause relay is off")
             self.goproOn = False
-            return self.goproOn
+            answer = {
+                "gopro": self.goproOn,
+                "error": "Relay is off"
+            }
+
+        return answer
 
     def turnRelay(self, state):
         """
@@ -105,6 +142,11 @@ class GoproServer(Worker):
                 self.goproOn = False
 
             self.logger.info("Turned relay {}".format(state))
+
+        return {
+            "relay": self.relayOn,
+            "gopro": self.goproOn
+        }
 
     def changeMode(self, force=False):
         """
@@ -147,45 +189,60 @@ class GoproServer(Worker):
             if self.fakeMode:
                 self.logger.info("Gopro took picture (fake mode)")
                 self.askCampaign("000000")
-                return False
+                answer = {
+                    "status": "000000"
+                }
 
-            errorNB = 0
+            else:
+                errorNB = 0
 
-            error, answer = self.arduino.sendMsg("T", "ID2")
-            errorNB += 1 if error else 0
-
-            error, answer = self.arduino.waitAnswer("ID1s")
-            errorNB += 1 if error else 0
-
-            goproFail = [[], "000000"]
-            if error:
-                error, answer = self.arduino.waitAnswer("")
-                goproFail[1] = answer
-                for i in range(len(answer)):
-                    if answer[i] == "1":
-                        goproFail[0].append(5-i)
+                error, answer = self.arduino.sendMsg("T", "ID2")
+                errorNB += 1 if error else 0
 
                 error, answer = self.arduino.waitAnswer("ID1s")
-                self.logger.error("Gopro {} failed to take picture".format(goproFail[0]))
+                errorNB += 1 if error else 0
 
-            error, answer = self.arduino.waitAnswer("TAKEN")
-            errorNB += 1 if error else 0
+                goproFail = [[], "000000"]
+                if error:
+                    error, answer = self.arduino.waitAnswer("")
+                    goproFail[1] = answer
+                    for i in range(len(answer)):
+                        if answer[i] == "1":
+                            goproFail[0].append(5-i)
 
-            self.askCampaign(goproFail[1])
+                    error, answer = self.arduino.waitAnswer("ID1s")
+                    self.logger.error("Gopro {} failed to take picture".format(goproFail[0]))
 
-            if errorNB == 0:
-                self.logger.info("All gopro took picture")
-                return False
-            else:
-                self.logger.info("Gopro failed to took picture")
-                return True
+                error, answer = self.arduino.waitAnswer("TAKEN")
+                errorNB += 1 if error else 0
+
+                if errorNB == 0:
+                    self.logger.info("All gopro took picture")
+                    return False
+                else:
+                    self.logger.info("Gopro failed to took picture")
+                    return True
+
+                self.askCampaign(goproFail[1])
+
+                answer = {
+                "status": goproFail[1]
+                }
+
         else:
             self.logger.error("Gopro can't take picture cause gopro is off")
-            return True
+            answer = {
+                "msg": "Gopro is off"
+            }
+
+        return answer
 
     def __init__(self, config):
         # Use the __init__ of the server class
         Worker.__init__(self, config, "gopro")
+
+        self.goproOn = False
+        self.relayOn = False
 
         try:
             # init arduino
@@ -207,9 +264,6 @@ class GoproServer(Worker):
 
         # switch off relay to be sure that gopro are off
         self.turnRelay(False)
-
-        self.goproOn = False
-        self.relayOn = False
 
         # dict who link a command to a method
         # a : (b, c)

@@ -27,6 +27,10 @@ class SensorsServer(Worker):
 
         self.logger.info("Auto mode turned {}".format(state))
 
+        return {
+            "automode": state
+        }
+
     def setDistance(self, distance):
         """
         Set distance between picture in auto mode.
@@ -36,6 +40,10 @@ class SensorsServer(Worker):
         self.distance = float(distance)
         self.automode.setDistance(distance)
         self.logger.info("Distance between photo set to {}".format(self.distance))
+
+        return {
+            "distance": distance
+        }
 
     def toDegCord(self):
         """
@@ -98,9 +106,10 @@ class SensorsServer(Worker):
 
         return self.battVoltage
 
-    def getSensors(self, log=True):
+    def getCord(self, log=True):
         if log:
             self.logger.info("Get coordinates")
+
         if self.fakeMode:
             self.lastCord = [0.0, 0.0, 0.0]
             self.lastSat = 0
@@ -108,7 +117,6 @@ class SensorsServer(Worker):
             self.lastHdop = 0
             if log:
                 self.logger.info("coordinates : {} (fake mode)".format(self.lastCord))
-
         else:
             checkNB = int(self.time_out/0.5)
 
@@ -135,12 +143,21 @@ class SensorsServer(Worker):
                 self.lastCord = [0, 0, 0]
                 self.logger.error("Failed to get new coordinates")
 
-        sensorsJson = {"lat": self.lastCord[0],
-                       "lon": self.lastCord[1],
-                       "alt": self.lastCord[2],
-                       "head": self.getHeading(),
-                       "battVoltage": self.getVoltage(),
-                       "time": self.lastTime}
+        return [self.lastCord, self.lastTime]
+        
+    def getSensors(self, log=True):
+        cord = self.getCord()
+        self.logger.info(cord)
+
+        sensorsJson = {
+            "lat": cord[0][0],
+            "lon": cord[0][1],
+            "alt": cord[0][2],
+            "head": self.getHeading(),
+            "battVoltage": self.getVoltage(),
+            "time": cord[1]
+        }
+
         self.gps_infoPub.send_json(sensorsJson)
         self.logger.debug("Data return from get cord : {}".format(sensorsJson))
 

@@ -25,6 +25,7 @@ Usage:
   rederbro sensors get
   rederbro campaign new NAME
   rederbro campaign attach NAME
+  rederbro campaign debug STATUS
 
 Options:
   -h --help     Show this screen.
@@ -54,7 +55,7 @@ def launchCommand(args):
     # a --> sub command name
     # b --> sub command argument
     if args[0] != "server":
-        Command(config, args[0]).run(args[1])
+        Command(config, args[0], answer=True).run(args[1])
     else:
         ServerCommand(config, args[0]).run(args[1])
 

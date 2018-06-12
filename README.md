@@ -5,7 +5,12 @@ This application manage camera, sensors and data storage of rederbro backpack.
 ## Requirement
 To use this application you must install all python3 requirement (you should do this in a virtual env):
 ```bash
+#Create the venv, optional
+python3 -m venv .venv/opv
+source .venv/opv
+
 pip install -r requirement.txt
+#Running setup.py will also download requirement so it's optional
 ```
 It will mainly download zmq which is a network library
 
@@ -41,5 +46,5 @@ To fully use rederbro you should start all server. The easiest way to do that is
 Next you can use a tmux to see log.
 
 ## Android application
-You can control the application by using shell command, but the simplest way is to use the android application  to manage rederbro.
+You can control the application by using shell command, but the simplest way is to use the android application to manage rederbro.
 [rederbro-controlApp](https://github.com/OpenPathView/rederbro-controlApp)

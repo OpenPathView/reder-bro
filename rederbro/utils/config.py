@@ -34,7 +34,8 @@ class Config():
                 ("distance", (True, "METER"))),
             "campaign": (
                 ("new", (True, "NAME")),
-                ("attach", (True, "NAME"))),
+                ("attach", (True, "NAME")),
+                ("debug", (True, "STATUS"))),
             "server": (
                 ("main", (True, "on")),
                 ("sensors", (True, "on")),

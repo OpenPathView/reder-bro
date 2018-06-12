@@ -27,6 +27,10 @@ class CampaignServer(Worker):
 
         self.campaign_infoPub.send_json({"info": "Picture taken", "error": picInfo["goproFail"]})
 
+        return {
+            "line": text
+        }
+
     def newCampaign(self, args):
         self.attachCampaign(args)
 
@@ -34,10 +38,19 @@ class CampaignServer(Worker):
             csv.write("number; time; lat; lon; alt; rad; gps_time; goProFailed\n")
 
         self.logger.info(args+" campaign created")
+        return {
+            "msg": "created",
+            "campaign": args
+        }
 
     def attachCampaign(self, args):
         self.currentCampaignPath = self.baseCampaignPath + args + ".csv"
         self.logger.info("Campaign attached to "+args)
+
+        return {
+            "msg": "Attached",
+            "campaign": args
+        }
 
     def pollCall(self, poll):
         if self.campaign_infoRep in poll:
@@ -78,7 +91,8 @@ class CampaignServer(Worker):
         self.command = {
             "add_picture": (self.add_picture, True),
             "new": (self.newCampaign, True),
-            "attach": (self.attachCampaign, True)
+            "attach": (self.attachCampaign, True),
+            "debug": (self.setDebug, True)
         }
 
         urlGPS = "tcp://{}:{}".format(self.config["gps"]["server_url"], self.config["gps"]["rep_server_port"])

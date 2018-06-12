@@ -45,6 +45,8 @@ class Worker():
 
         self.poller.register(self.socket, zmq.POLLIN)
 
+        self.answer = self.context.socket(zmq.PUSH)
+
         self.fakeMode = False
         self.running = True
 
@@ -59,12 +61,20 @@ class Worker():
             self.logger.setLevel(logging.INFO)
             self.logger.info("Debug mode set off")
 
+        return {
+            "debug": debug
+        }
+
     def setFakeMode(self, fakeMode):
         """
         Change fake mode
         """
         self.fakeMode = True if fakeMode == "on" else False
         self.logger.info("Fake mode set to {}".format(self.fakeMode))
+
+        return {
+            "fakemode": self.fakeMode
+        }
 
     def start(self):
         """
@@ -88,9 +98,17 @@ class Worker():
             if cmd["topic"] == self.name:
                 try:
                     if self.command[cmd["command"]][1]:
-                        self.command[cmd["command"]][0](cmd["args"])
+                        rep = self.command[cmd["command"]][0](cmd["args"])
                     else:
-                        self.command[cmd["command"]][0]()
+                        rep = self.command[cmd["command"]][0]()
+
+                    if "answer_port" in cmd and "answer_url" in cmd:
+                        url = "tcp://{}:{}".format(cmd["answer_url"], cmd["answer_port"])
+                        self.answer.connect(url)
+                        self.answer.send_json(rep)
+                        self.answer.disconnect(url)
+
+
                 except Exception as e:
                     self.logger.exception(e)
 
