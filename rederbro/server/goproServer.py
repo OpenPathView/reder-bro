@@ -23,7 +23,8 @@ class GoproServer(Worker):
             self.arduino.clear()
 
         return {
-            "msg": "Serial cleared"
+            "msg": "Serial cleared",
+            "error": False
         }
 
     def turnGoproOn(self, full=True):
@@ -56,9 +57,8 @@ class GoproServer(Worker):
                 self.goproOn = True
 
         return {
-            "gopro": self.goproOn,
-            "error": error,
-            "fullmode": full
+            "msg": "Gopro turned {}".format("on" if self.goproOn else "off"),
+            "error": error
         }
 
     def turnGoproOff(self):
@@ -80,7 +80,7 @@ class GoproServer(Worker):
             self.goproOn = False
 
         return {
-            "gopro": self.goproOn,
+            "msg": "Gopro turned {}".format("on" if self.goproOn else "off"),
             "error": error
         }
 
@@ -99,9 +99,9 @@ class GoproServer(Worker):
                 self.goproOn = state
                 self.logger.info("Turned gopro {} (fake mode)".format(state))
 
-                answer = {
-                    "gopro": self.goproOn,
-                    "error": False
+                return {
+                    "msg": "Gopro turned {}".format("on" if self.goproOn else "off"),
+                    "error": self.goproOn
                 }
 
             else:
@@ -113,9 +113,9 @@ class GoproServer(Worker):
         else:
             self.logger.error("Failed to change gopro status cause relay is off")
             self.goproOn = False
-            answer = {
-                "gopro": self.goproOn,
-                "error": "Relay is off"
+            return {
+                "msg": "Gopro turned {} cause relay is off".format("on" if self.goproOn else "off"),
+                "error": True
             }
 
         return answer
@@ -144,8 +144,8 @@ class GoproServer(Worker):
             self.logger.info("Turned relay {}".format(state))
 
         return {
-            "relay": self.relayOn,
-            "gopro": self.goproOn
+            "msg": "Relay turned {} and gopro is {}".format("on" if self.relayOn else "off", "on" if self.goproOn else "off"),
+            "error": False
         }
 
     def changeMode(self, force=False):
@@ -190,7 +190,8 @@ class GoproServer(Worker):
                 self.logger.info("Gopro took picture (fake mode)")
                 self.askCampaign("000000")
                 answer = {
-                    "status": "000000"
+                    "msg": "All gopro took picture",
+                    "error": False
                 }
 
             else:
@@ -218,21 +219,21 @@ class GoproServer(Worker):
 
                 if errorNB == 0:
                     self.logger.info("All gopro took picture")
-                    return False
                 else:
                     self.logger.info("Gopro failed to took picture")
-                    return True
 
                 self.askCampaign(goproFail[1])
 
                 answer = {
-                "status": goproFail[1]
+                    "msg": "Gopro took picture except gopro : {}".format(", ".join(goProFailed[0])) if errorNB > 0 else "All gopro took picture",
+                    "error": False if errorNB == 0 else True
                 }
 
         else:
             self.logger.error("Gopro can't take picture cause gopro is off")
             answer = {
-                "msg": "Gopro is off"
+                "msg": "Gopro is off so I can't take picture",
+                "error": True
             }
 
         return answer

@@ -102,6 +102,8 @@ class Worker():
                     else:
                         rep = self.command[cmd["command"]][0]()
 
+                    self.logger.debug("Task answer : {}".format(rep))
+
                     if "answer_port" in cmd and "answer_url" in cmd:
                         url = "tcp://{}:{}".format(cmd["answer_url"], cmd["answer_port"])
                         self.answer.connect(url)

@@ -28,7 +28,8 @@ class SensorsServer(Worker):
         self.logger.info("Auto mode turned {}".format(state))
 
         return {
-            "automode": state
+            "msg": "Automode turned {}".format(state),
+            "error": False
         }
 
     def setDistance(self, distance):
@@ -42,7 +43,8 @@ class SensorsServer(Worker):
         self.logger.info("Distance between photo set to {}".format(self.distance))
 
         return {
-            "distance": distance
+            "msg": "Automode distance set to {}".format(self.distance),
+            "error": False
         }
 
     def toDegCord(self):
@@ -144,12 +146,12 @@ class SensorsServer(Worker):
                 self.logger.error("Failed to get new coordinates")
 
         return [self.lastCord, self.lastTime]
-        
+
     def getSensors(self, log=True):
         cord = self.getCord()
         self.logger.info(cord)
 
-        sensorsJson = {
+        self.sensorsJson = {
             "lat": cord[0][0],
             "lon": cord[0][1],
             "alt": cord[0][2],
@@ -158,17 +160,22 @@ class SensorsServer(Worker):
             "time": cord[1]
         }
 
-        self.gps_infoPub.send_json(sensorsJson)
-        self.logger.debug("Data return from get cord : {}".format(sensorsJson))
+        self.gps_infoPub.send_json(self.sensorsJson)
+        self.logger.debug("Data return from get cord : {}".format(self.sensorsJson))
 
-        return sensorsJson
+        answer = {
+            "msg": "Sensors data :\n{}".format(",\n".join((" : ".join(["    - {}".format(i), str(self.sensorsJson[i])])  for i in self.sensorsJson))),
+            "error": False
+        }
+
+        return answer
 
     def pollCall(self, poll):
         """If other socket is call get there."""
         if self.gps_infoRep in poll:
             self.gps_infoRep.recv_json()
-            rep = self.getSensors()
-            self.gps_infoRep.send_json(rep)
+            self.getSensors()
+            self.gps_infoRep.send_json(self.sensorsJson)
 
     def __init__(self, config):
         Worker.__init__(self, config, "sensors")
@@ -181,6 +188,15 @@ class SensorsServer(Worker):
         self.battVoltage = 0.0
 
         self.earth_radius = 6372.795477598 * 1000
+
+        self.sensorsJson = {
+            "lat": self.lastCord[0],
+            "lon": self.lastCord[1],
+            "alt": self.lastCord[2],
+            "head": self.heading,
+            "battVoltage": self.battVoltage,
+            "time": self.lastTime
+        }
 
         self.command = {
             "debug": (self.setDebug, True),

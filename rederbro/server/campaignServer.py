@@ -28,7 +28,8 @@ class CampaignServer(Worker):
         self.campaign_infoPub.send_json({"info": "Picture taken", "error": picInfo["goproFail"]})
 
         return {
-            "line": text
+            "msg": "A new picture register to {} csv, the line is {}".format(self.currentCampaign,  text),
+            "error": False
         }
 
     def newCampaign(self, args):
@@ -39,17 +40,18 @@ class CampaignServer(Worker):
 
         self.logger.info(args+" campaign created")
         return {
-            "msg": "created",
-            "campaign": args
+            "msg": "Campaign {} succefuly created and attached".format(self.currentCampaign),
+            "error": False
         }
 
     def attachCampaign(self, args):
         self.currentCampaignPath = self.baseCampaignPath + args + ".csv"
+        self.currentCampaign = args
         self.logger.info("Campaign attached to "+args)
 
         return {
-            "msg": "Attached",
-            "campaign": args
+            "msg": "Campaign {} succefuly attached".format(self.currentCampaign),
+            "error": False
         }
 
     def pollCall(self, poll):
@@ -79,7 +81,8 @@ class CampaignServer(Worker):
 
         self.baseCampaignPath = os.path.dirname(os.path.abspath(__file__))+"/../campaign/"
 
-        self.newCampaign("pictureInfo")
+        self.currentCampaign = "picturesInfo"
+        self.newCampaign(self.currentCampaign)
 
         self.pictureNB = 0
 

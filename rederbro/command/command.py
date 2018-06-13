@@ -26,7 +26,8 @@ class Command():
             args["answer_url"] = socket.gethostbyname(socket.gethostname())
         self.socket.send_json(args)
         if self.askAnswer:
-            print(self.answer.recv_json())
+            data = self.answer.recv_json()
+            print("{}\nError : {}".format(data["msg"], data["error"]))
 
     def run(self, args):
         """
