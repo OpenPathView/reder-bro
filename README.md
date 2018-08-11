@@ -5,12 +5,12 @@ This application manage camera, sensors and data storage of rederbro backpack.
 ## Requirement
 To use this application you must install all python3 requirement (you should do this in a virtual env):
 ```bash
-#Create the venv, optional
+# Create the venv, optional
 python3 -m venv .venv/opv
 source .venv/opv
 
 pip install -r requirement.txt
-#Running setup.py will also download requirement so it's optional
+# Running setup.py will also download requirement so it's optional
 ```
 It will mainly download zmq which is a network library
 
@@ -31,8 +31,8 @@ As I said before all server are independant but there are some exception :
 Before using rederbro you must install rederbro application :
 ```bash
 python setup.py install
-#You can use develop instead of install to make change in the application
-#Of course it's a python3 application =)
+# You can use develop instead of install to make change in the application
+# Of course it's a python3 application =)
 ```
 
 I don't advise to install it with ```pip -e``` cause you will don't have access to log and campaign csv
@@ -48,3 +48,19 @@ Next you can use a tmux to see log.
 ## Android application
 You can control the application by using shell command, but the simplest way is to use the android application to manage rederbro.
 [rederbro-controlApp](https://github.com/OpenPathView/rederbro-controlApp)
+
+## Use your phone as gps
+If you don't want to buy a serial gps you can use your phone gps (it must be an android).
+So first you must install [Share GPS](https://www.jillybunch.com/sharegps/) this application will create a TCP socket with GPS trace.
+When you configure your Share GPS connection you should select NMEA data type and TCP/IP connection type.
+In this example we select Share GPS TCP/IP port at 50000.
+Now on the rederbro host we use socat to link TCP connection to a virtual serial port :
+```bash
+socat -d -d pty,raw,echo=0,ispeed=115200 TCP:192.168.1.179:50000
+```
+Socat take two argument :
+
+  * Output : The first argument is were socat will send data, here we chose the pty serial port with 115200 baud rate
+  * Input : The secodn argument is from were socat will get data, here we put our TCP/IP connection with our phone
+
+Next you just have to configure rederbro in ```rederbro/config.json``` to use the serial given by socat.

@@ -47,14 +47,12 @@ class SensorsServer(Worker):
             "error": False
         }
 
-    def toDegCord(self):
+    def toDegCord(self, lat, lon):
         """
         Return latitude and longitude in degree.
 
         google earth and some other thing prefer degree cordinate.
         """
-        lat = self.lastCord[0]
-        lon = self.lastCord[1]
         # ensure that we have data to work with
         if lat is not None and lon is not None and len(lat) > 0 and len(lon) > 0:
             try:
@@ -77,11 +75,9 @@ class SensorsServer(Worker):
             lon_min = (100.0*(float(lon)-lon_deg))/60
             lon = lon_deg+lon_min
 
-            self.lastCord[0] = lat
-            self.lastCord[1] = lon
-            return self.lastCord
+            return [lat, lon]
 
-        return 0, 0  # mean it didin't work
+        return [0, 0]  # mean it didin't work
 
     def getHeading(self):
         self.heading = 0.0
@@ -89,6 +85,8 @@ class SensorsServer(Worker):
 
     def getVoltage(self, log=True):
         """Retriev the battery voltage."""
+        self.battVoltage = 0.0
+        return 0.0
         if log:
             self.logger.info("Get battery voltage")
         if self.fakeMode:
@@ -132,11 +130,11 @@ class SensorsServer(Worker):
             if not error:
                 # $GPGGA,<time>,<lat>,<N/S>,<lon>,<E/W>,<positionnement type>,<satelite number>,<HDOP>,<alt>,<other thing>
                 self.lastSat = answer[7]
-                self.lastCord = [answer[2]+answer[3], answer[4]+answer[5], float(answer[9])]
                 self.lastTime = float(answer[1])
                 self.lastHdop = answer[8]
 
-                self.toDegCord()
+                self.lastCord = self.toDegCord(answer[2]+answer[3], answer[4]+answer[5])
+                self.lastCord.append(float(answer[9]))
 
                 if log:
                     self.logger.info("Current coordinates : {}".format(self.lastCord))
@@ -147,9 +145,8 @@ class SensorsServer(Worker):
 
         return [self.lastCord, self.lastTime]
 
-    def getSensors(self, log=True):
+    def getSensors(self):
         cord = self.getCord()
-        self.logger.info(cord)
 
         self.sensorsJson = {
             "lat": cord[0][0],

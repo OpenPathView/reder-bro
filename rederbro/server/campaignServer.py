@@ -6,17 +6,25 @@ import csv
 
 class CampaignServer(Worker):
     def add_picture(self, picInfo):
+        self.logger.debug("Ask sensors data")
         self.pictureNB += 1
         self.gps_infoReq.send_json({})
-        gps = self.gps_infoReq.recv_json()
-        text = "{}; {}; {}; {}; {}; {}; {}; {}\n".format(
+        try:
+            self.logger.debug("Receive sensors data")
+            self.sensorsJson = self.gps_infoReq.recv_json()
+        except Exception as e:
+            self.setSocketReq()
+            self.logger.debug(e)
+
+        text = "{}; {}; {}; {}; {}; {}; {}; {}; {}\n".format(
             self.pictureNB,
             picInfo["time"],
-            gps["lat"],
-            gps["lon"],
-            gps["alt"],
-            gps["head"],
-            gps["time"],
+            self.sensorsJson["lat"],
+            self.sensorsJson["lon"],
+            self.sensorsJson["alt"],
+            self.sensorsJson["head"],
+            self.sensorsJson["time"],
+            self.sensorsJson["battVoltage"],
             picInfo["goproFail"]
         )
 
@@ -25,7 +33,11 @@ class CampaignServer(Worker):
         with open(self.currentCampaignPath, "a") as csv:
             csv.write(text)
 
-        self.campaign_infoPub.send_json({"info": "Picture taken", "error": picInfo["goproFail"]})
+        self.campaign_infoPub.send_json({
+            "info": "Picture taken",
+            "error": picInfo["goproFail"],
+            "self.sensorsJson": self.sensorsJson
+            })
 
         return {
             "msg": "A new picture register to {} csv, the line is {}".format(self.currentCampaign,  text),
@@ -36,7 +48,7 @@ class CampaignServer(Worker):
         self.attachCampaign(args)
 
         with open(self.currentCampaignPath, "w") as csv:
-            csv.write("number; time; lat; lon; alt; rad; gps_time; goProFailed\n")
+            csv.write("number; time; lat; lon; alt; rad; self.sensorsJson_time; voltage; goProFailed\n")
 
         self.logger.info(args+" campaign created")
         return {
@@ -98,7 +110,7 @@ class CampaignServer(Worker):
             "debug": (self.setDebug, True)
         }
 
-        urlGPS = "tcp://{}:{}".format(self.config["gps"]["server_url"], self.config["gps"]["rep_server_port"])
+        self.url_gps = "tcp://{}:{}".format(self.config["gps"]["server_url"], self.config["gps"]["rep_server_port"])
 
         self.campaign_infoPub = self.context.socket(zmq.PUB)
         self.campaign_infoPub.bind("tcp://{}:{}".format(self.config["campaign"]["bind_url"], self.config["campaign"]["pub_server_port"]))
@@ -109,4 +121,26 @@ class CampaignServer(Worker):
         self.poller.register(self.campaign_infoRep, zmq.POLLIN)
 
         self.gps_infoReq = self.context.socket(zmq.REQ)
-        self.gps_infoReq.connect(urlGPS)
+        # self.gps_infoReq.setsockopt(zmq.RCVTIMEO, (self.config["gps"]["time_out"] + 2)*1000)
+        self.gps_infoReq.setsockopt(zmq.RCVTIMEO, 1000)
+        self.gps_infoReq.setsockopt(zmq.REQ_RELAXED, 1)
+        self.gps_infoReq.setsockopt(zmq.REQ_CORRELATE, 1)
+        self.gps_infoReq.connect(self.url_gps)
+
+        self.setSocketReq(close=False)
+
+        self.sensorsJson = {
+            "lat": 0,
+            "lon": 0,
+            "alt": 0,
+            "head": 0,
+            "battVoltage": 0,
+            "time": 0
+        }
+
+    def setSocketReq(self, close=True):
+        if close:
+            self.gps_infoReq.close()
+        self.gps_infoReq = self.context.socket(zmq.REQ)
+        self.gps_infoReq.setsockopt(zmq.RCVTIMEO, (self.config["gps"]["time_out"] + 2)*1000)
+        self.gps_infoReq.connect(self.url_gps)

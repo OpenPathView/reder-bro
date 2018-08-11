@@ -41,7 +41,7 @@ class GoproServer(Worker):
 
         else:
             if full:
-                time.sleep(0.5)
+                time.sleep(1.5)
                 error = self.changeMode(force=True)
 
                 if error:
@@ -225,7 +225,7 @@ class GoproServer(Worker):
                 self.askCampaign(goproFail[1])
 
                 answer = {
-                    "msg": "Gopro took picture except gopro : {}".format(", ".join(goProFailed[0])) if errorNB > 0 else "All gopro took picture",
+                    "msg": "Gopro took picture except gopro : {}".format(goproFail[0]) if errorNB > 0 else "All gopro took picture",
                     "error": False if errorNB == 0 else True
                 }
 

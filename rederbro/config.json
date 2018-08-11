@@ -16,8 +16,7 @@
       "server_url" : "127.0.0.1",
       "bind_url" : "*",
       "pub_server_port" : 8549,
-      "rep_server_port" : 8550,
-      "delay" : 0.25
+      "rep_server_port" : 8550
     },
     "campaign" : {
       "bind_url": "*",

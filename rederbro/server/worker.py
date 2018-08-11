@@ -30,14 +30,9 @@ class Worker():
         self.logger.info("-----------------------------------------------")
         self.logger.info("Connecting to main server")
         url = "tcp://{}:{}".format(self.config["server"]["server_url"], self.config["server"]["worker_server_port"])
-        urlGPS = "tcp://{}:{}".format(self.config["gps"]["server_url"], self.config["gps"]["pub_server_port"])
 
         self.context = zmq.Context()
         self.poller = zmq.Poller()
-
-        self.gps_info = self.context.socket(zmq.SUB)
-        self.gps_info.connect(urlGPS)
-        self.gps_info.setsockopt_string(zmq.SUBSCRIBE, "")
 
         self.socket = self.context.socket(zmq.SUB)
         self.socket.connect(url)
@@ -62,7 +57,8 @@ class Worker():
             self.logger.info("Debug mode set off")
 
         return {
-            "debug": debug
+            "msg": "Debug mode turned {}".format(debug),
+            "error": False
         }
 
     def setFakeMode(self, fakeMode):
@@ -73,7 +69,8 @@ class Worker():
         self.logger.info("Fake mode set to {}".format(self.fakeMode))
 
         return {
-            "fakemode": self.fakeMode
+            "msg": "Fake mode turner {}".format(fakeMode),
+            "error": False
         }
 
     def start(self):
@@ -110,8 +107,13 @@ class Worker():
                         self.answer.send_json(rep)
                         self.answer.disconnect(url)
 
-
                 except Exception as e:
                     self.logger.exception(e)
+                    rep = {"msg": "Task fail", "error": e}
+                    if "answer_port" in cmd and "answer_url" in cmd:
+                        url = "tcp://{}:{}".format(cmd["answer_url"], cmd["answer_port"])
+                        self.answer.connect(url)
+                        self.answer.send_json(rep)
+                        self.answer.disconnect(url)
 
         self.pollCall(poll)
