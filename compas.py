@@ -37,8 +37,8 @@ class Compas:
         """
         if self.opvServer.config.get("FAKE_MODE"):
             return "404°42"
-        return "404°42"
-        # return self.__hmc5883l.getDeclinationString()
+        # return "404°42"
+        return self.__hmc5883l.getDeclinationString()
 
 if __name__ == "__main__":
     import time

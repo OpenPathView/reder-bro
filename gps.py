@@ -185,7 +185,6 @@ class Gps(object):
                         #if distance >= DIST_TRIGGER:
                         self.last_coord = self.getDegCoord()
                         os.system("""echo "%f; %f" >> track"""%(self.last_coord[0],self.last_coord[1]))
-
     def getDataDict(self):
         """
         return all gps data under a dict structure
