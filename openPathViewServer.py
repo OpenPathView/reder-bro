@@ -37,6 +37,9 @@ class OpenPathViewServer(threading.Thread):
         if not os.path.isfile("picturesInfo.csv"):
             os.system("""echo "time; lat; lon; alt; rad; goProFailed" >> picturesInfo.csv""")
 
+        if not os.path.isfile("picturesInfo_secondaryGPS.csv"):
+            os.system("""echo "time; lat; lon; alt; rad; goProFailed" >> picturesInfo.csv""")
+
 
         self.autoMode = threading.Event()
         self.distPhoto = 5
@@ -44,9 +47,10 @@ class OpenPathViewServer(threading.Thread):
 
         self.configOnOffLock = threading.Lock()
 
-        self.gps = gps.Gps(self, "/dev/ttyAMA0", baudrate=115200)
-        # self.gps = gps.Gps(self,"/dev/ttyAMA0",baudrate=9600)
+        self.gps = gps.Gps(self, self.config.get("MAIN_GPS_SERIAL"), baudrate=115200, trackfull_path="track_full_main")
+        self.gps_secondary = gps.Gps(self, "/dev/ttyAMA0", baudrate=115200, trackfull_path="track_full_secondary")
         self.lastLatLon = self.gps.getDegCoord()
+        self.lastLatLon_secondary = self.gps_secondary.getDegCoord()
 
         self.compas = compas.Compas(self)
         self.gopro = goPro.GoPro(self)
@@ -149,13 +153,16 @@ class OpenPathViewServer(threading.Thread):
         """
         rad = self.compas.getHeading()
         lat,lon = self.gps.getDegCoord()
+        lat_secondary, lon_secondary = self.gps_secondary.getDegCoord()
         alt = self.gps.getAltitude()
+        alt_secondary = self.gps_secondary.getAltitude()
         if succes:
             self.interfaces.newPanorama(True,latitude=lat,longitude=lon,altitude=alt,heading=rad)
         else:
             self.interfaces.newPanorama(False,goProFailed = goProFailed)
 
         os.system("""echo "{}; {:f}; {:f}; {:f}; {}; {}" >> picturesInfo.csv""".format(time.asctime(), lat, lon, alt, rad, goProFailed))
+        os.system("""echo "{}; {:f}; {:f}; {:f}; {}; {}" >> picturesInfo_secondaryGPS.csv""".format(time.asctime(), lat_secondary, lon_secondary, alt_secondary, rad, goProFailed))
 
     def canMove(self):
         """
@@ -278,6 +285,7 @@ class OpenPathViewServer(threading.Thread):
         """
         print(color.OKBLUE+"Stopping server...",color.ENDC)
         self.gps.stop()
+        self.gps_secondary.stop()
         self.gopro.stop()
         self.interfaces.stop()
         self.keepAlive.clear()
@@ -291,6 +299,7 @@ class OpenPathViewServer(threading.Thread):
         for interface in self.interfaces:
             interface.__del__()
         self.gps.__del__()
+        self.gps_secondary.__del__()
         self.gopro.__del__()
         print(color.WARNING+"Server destroyed",color.ENDC)
 

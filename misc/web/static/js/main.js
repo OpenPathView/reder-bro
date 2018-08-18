@@ -3,12 +3,9 @@ var qs = function(s){
 };
 
 var posIcon = L.icon({
-    iconUrl: 'static/images/marker-pos.png',
-    shadowUrl: 'static/images/marker-pos-shadow.png',
-    iconSize:     [75, 76], // size of the icon
-    shadowSize:   [103, 57], // size of the shadow
-    iconAnchor:   [37, 71], // point of the icon which will correspond to marker's location
-    shadowAnchor: [36, 51],  // the same for the shadow
+    iconUrl: 'static/images/marker-icon-red.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
     popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
 });
 
@@ -125,7 +122,8 @@ var ws = new function(){
             this.map = L.map('map').setView([48.41416, -4.47197], 13);
             L.tileLayer('/map/{z}/{x}/{y}.png', {
             attribution: 'tmp',
-            maxZoom: 19,
+            maxZoom: 22,
+            maxNativeZoom: 18,
             minZoom: 1
             }).addTo(this.map);
 

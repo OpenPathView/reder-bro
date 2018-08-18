@@ -15,7 +15,7 @@ class Gps(object):
     a class to manage serial connected gps
     """
 
-    def __init__(self,opvServer=None,port=None, baudrate=115200, timeout=1):
+    def __init__(self,opvServer=None,port=None, baudrate=115200, timeout=1, trackfull_path="track_full"):
         """
         init the gps, if all needed information are provided, will connect the serial
         """
@@ -40,6 +40,7 @@ class Gps(object):
         self.timeout = timeout
         self.readTimeout = 1
         self.data = None
+        self.track_path = trackfull_path
         self.__updateThread = None
         if port!=None and not self.opvServer.config.get("FAKE_MODE"):
             self.connect()
@@ -147,7 +148,7 @@ class Gps(object):
                     except UnicodeDecodeError:
                         data = ""
                     msg=msg[msg.find(END)+len(END):]
-                    os.system("echo '{0}' >> track_full".format(data))
+                    #os.system("echo '{0}' >> {1}".format(data, self.track_path))
                     data = data.split(",")
                     if data[0] == "$GPGGA":
                         if self.opvServer.config.get("GPS_DEBUG"):
@@ -165,7 +166,7 @@ class Gps(object):
                         distance = self.calculateDist(lat,lon)
                         #if distance >= DIST_TRIGGER:
                         self.last_coord = self.getDegCoord()
-                        os.system("""echo "%f; %f" >> track"""%(self.last_coord[0],self.last_coord[1]))
+                        os.system("""echo "%f; %f" >> %s"""%(self.last_coord[0],self.last_coord[1],self.track_path))
 
 
                     if data[0]=="$GNGGA" and len(data) >= 10:#If the object contain the right data
@@ -184,7 +185,7 @@ class Gps(object):
                         distance = self.calculateDist(lat,lon)
                         #if distance >= DIST_TRIGGER:
                         self.last_coord = self.getDegCoord()
-                        os.system("""echo "%f; %f" >> track"""%(self.last_coord[0],self.last_coord[1]))
+                        os.system("""echo "%f; %f" >> %s"""%(self.last_coord[0],self.last_coord[1]),self.track_path)
     def getDataDict(self):
         """
         return all gps data under a dict structure
