@@ -230,6 +230,11 @@ var ws = new function(){
         this.ws.send( JSON.stringify(data) );
     };
 
+    this.setAutoModeTimed = function(intervalSec){
+        var data = { set: "automodetimed", "intervalSec": intervalSec};
+        this.ws.send( JSON.stringify(data) );
+    };
+
     this.turnOn = function(){
         var data = { action: "turnon" };
         this.ws.send( JSON.stringify(data) );

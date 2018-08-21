@@ -42,8 +42,11 @@ class OpenPathViewServer(threading.Thread):
 
 
         self.autoMode = threading.Event()
+        self.autoModeTimed = threading.Event()
+        self.autoModeTimeIntervalSec = 2.5  # default 2.5 seconds
         self.distPhoto = 5
         self.configAutoModeLock = threading.Lock()
+        self.configAutoModeTimedLock = threading.Lock()
 
         self.configOnOffLock = threading.Lock()
 
@@ -156,13 +159,20 @@ class OpenPathViewServer(threading.Thread):
         lat_secondary, lon_secondary = self.gps_secondary.getDegCoord()
         alt = self.gps.getAltitude()
         alt_secondary = self.gps_secondary.getAltitude()
+
+        os.system(
+            """echo "{}; {:f}; {:f}; {:f}; {}; {}" >> picturesInfo.csv""".format(time.asctime(), lat, lon, alt, rad,
+                                                                                 goProFailed))
+        os.system("""echo "{}; {:f}; {:f}; {:f}; {}; {}" >> picturesInfo_secondaryGPS.csv""".format(time.asctime(),
+                                                                                                    lat_secondary,
+                                                                                                    lon_secondary,
+                                                                                                    alt_secondary, rad,
+                                                                                                    goProFailed))
         if succes:
             self.interfaces.newPanorama(True,latitude=lat,longitude=lon,altitude=alt,heading=rad)
         else:
             self.interfaces.newPanorama(False,goProFailed = goProFailed)
 
-        os.system("""echo "{}; {:f}; {:f}; {:f}; {}; {}" >> picturesInfo.csv""".format(time.asctime(), lat, lon, alt, rad, goProFailed))
-        os.system("""echo "{}; {:f}; {:f}; {:f}; {}; {}" >> picturesInfo_secondaryGPS.csv""".format(time.asctime(), lat_secondary, lon_secondary, alt_secondary, rad, goProFailed))
 
     def canMove(self):
         """
@@ -191,6 +201,23 @@ class OpenPathViewServer(threading.Thread):
         else:
             print(color.WARNING+"Error : autoMode already set"+color.ENDC)
 
+
+    def __automodeTimedThread(self):
+        """
+        Timed auto mode thread.
+        :return:
+        """
+        print(color.OKBLUE + "starting Timed Auto Mode" + color.ENDC)
+        if not self.autoModeTimed.isSet():
+            self.autoModeTimed.set()
+            while self.autoModeTimed.isSet() and self.keepAlive.isSet():
+                self.takePic()
+                time.sleep(self.autoModeTimeIntervalSec)
+
+            print(color.OKBLUE + "stoping Timed auto mode" + color.ENDC)
+        else:
+            print(color.WARNING + "Error : timed auto mode already set" + color.ENDC)
+
     def run(self):
         """
         control thread : display information and allow command in the same time
@@ -215,6 +242,24 @@ class OpenPathViewServer(threading.Thread):
             print("Disabling automode")
             self.autoMode.clear()
         self.configAutoModeLock.release()
+
+
+    def setAutoTimed(self,intervalSec=None):
+        """
+        set auto mode parameters, None mean Off
+        """
+        self.configAutoModeTimedLock.acquire()
+        if intervalSec:
+            print("Setting timed auto mode for",intervalSec," seconds")
+            self.autoModeTimeIntervalSec = intervalSec
+            if not self.autoModeTimed.isSet():
+                automodeTimedThread = threading.Thread(target=self.__automodeTimedThread)
+                automodeTimedThread.daemon=True
+                automodeTimedThread.start()
+        else:
+            print("Disabling timed auto mode")
+            self.autoModeTimed.clear()
+        self.configAutoModeTimedLock.release()
 
     def socketHandler(self,socketSource,msg):
         """
@@ -251,6 +296,14 @@ class OpenPathViewServer(threading.Thread):
                         self.setAuto()
                 except KeyError:
                     print(color.FAIL,"Error : automode configuration fail",color.ENDC)
+            elif msg["set"]=="automodetimed":
+                try:
+                    if msg["intervalSec"]:
+                        self.setAutoTimed(float(msg["intervalSec"]))
+                    else:
+                        self.setAutoTimed()
+                except KeyError:
+                    print(color.FAIL,"Error : automode timed configuration fail",color.ENDC)
             else:
                 print(color.WARNING,"WARNING : no correct setting field found in socket json",color.ENDC)
 
