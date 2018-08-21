@@ -38,7 +38,7 @@ class OpenPathViewServer(threading.Thread):
             os.system("""echo "time; lat; lon; alt; rad; goProFailed" >> picturesInfo.csv""")
 
         if not os.path.isfile("picturesInfo_secondaryGPS.csv"):
-            os.system("""echo "time; lat; lon; alt; rad; goProFailed" >> picturesInfo.csv""")
+            os.system("""echo "time; lat; lon; alt; rad; goProFailed" >> picturesInfo_secondaryGPS.csv""")
 
 
         self.autoMode = threading.Event()
@@ -47,8 +47,8 @@ class OpenPathViewServer(threading.Thread):
 
         self.configOnOffLock = threading.Lock()
 
-        self.gps = gps.Gps(self, self.config.get("MAIN_GPS_SERIAL"), baudrate=115200, trackfull_path="track_full_main")
-        self.gps_secondary = gps.Gps(self, "/dev/ttyAMA0", baudrate=115200, trackfull_path="track_full_secondary")
+        self.gps_secondary = gps.Gps(self, "/dev/ttyAMA0", baudrate=115200, trackfull_path="track_full_secondary",debug=False)
+        self.gps = gps.Gps(self, self.config.get("MAIN_GPS_SERIAL"), baudrate=115200, trackfull_path="track_full_main",debug=False)
         self.lastLatLon = self.gps.getDegCoord()
         self.lastLatLon_secondary = self.gps_secondary.getDegCoord()
 

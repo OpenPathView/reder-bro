@@ -15,7 +15,7 @@ class Gps(object):
     a class to manage serial connected gps
     """
 
-    def __init__(self,opvServer=None,port=None, baudrate=115200, timeout=1, trackfull_path="track_full"):
+    def __init__(self,opvServer=None,port=None, baudrate=115200, timeout=1, trackfull_path="track_full",debug=False):
         """
         init the gps, if all needed information are provided, will connect the serial
         """
@@ -41,6 +41,7 @@ class Gps(object):
         self.readTimeout = 1
         self.data = None
         self.track_path = trackfull_path
+        self.debug = debug
         self.__updateThread = None
         if port!=None and not self.opvServer.config.get("FAKE_MODE"):
             self.connect()
@@ -151,7 +152,7 @@ class Gps(object):
                     #os.system("echo '{0}' >> {1}".format(data, self.track_path))
                     data = data.split(",")
                     if data[0] == "$GPGGA":
-                        if self.opvServer.config.get("GPS_DEBUG"):
+                        if self.debug:
                             print(data)
                         #$GGA,<time>,<lat>,<N/S>,<long>,<E/W>,<GPS-QUAL>,<satelite>,<hdop>,<alt>,<mode>,<otherthing>
                         self.data = data
@@ -166,11 +167,15 @@ class Gps(object):
                         distance = self.calculateDist(lat,lon)
                         #if distance >= DIST_TRIGGER:
                         self.last_coord = self.getDegCoord()
-                        os.system("""echo "%f; %f" >> %s"""%(self.last_coord[0],self.last_coord[1],self.track_path))
+
+                        try:
+                            os.system("""echo "%f; %f" >> %s"""%(self.last_coord[0],self.last_coord[1],self.track_path))
+                        except TypeError:
+                            print("GPS type error.")
 
 
                     if data[0]=="$GNGGA" and len(data) >= 10:#If the object contain the right data
-                        if self.opvServer.config.get("GPS_DEBUG"):
+                        if self.debug:
                             print(data)
                         #$GPGGA,<time>,<lat>,<N/S>,<lon>,<E/W>,<positionnement type>,<satelite number>,<HDOP>,<alt>,<other thing>
                         self.data = data
@@ -185,7 +190,11 @@ class Gps(object):
                         distance = self.calculateDist(lat,lon)
                         #if distance >= DIST_TRIGGER:
                         self.last_coord = self.getDegCoord()
-                        os.system("""echo "%f; %f" >> %s"""%(self.last_coord[0],self.last_coord[1]),self.track_path)
+                        try:
+                            os.system("""echo "%f; %f" >> %s"""%(self.last_coord[0],self.last_coord[1],self.track_path))
+                        except TypeError:
+                            print("GPS type error.")
+
     def getDataDict(self):
         """
         return all gps data under a dict structure
