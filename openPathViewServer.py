@@ -2,10 +2,12 @@
 
 import RPi.GPIO as gpio
 
-import threading, time
 import os
 import sys
 import json
+import time
+import battery
+import threading
 
 sys.path.append(os.path.realpath(__file__)[:os.path.realpath(__file__).rfind("/")]+"/includes")
 sys.path.append(os.path.realpath(__file__)[:os.path.realpath(__file__).rfind("/")]+"/includes/quick2wire-python-api/")
@@ -35,21 +37,27 @@ class OpenPathViewServer(threading.Thread):
         if not os.path.isfile("picturesInfo.csv"):
             os.system("""echo "time; lat; lon; alt; rad; goProFailed" >> picturesInfo.csv""")
 
+        if not os.path.isfile("picturesInfo_secondaryGPS.csv"):
+            os.system("""echo "time; lat; lon; alt; rad; goProFailed" >> picturesInfo_secondaryGPS.csv""")
+
 
         self.autoMode = threading.Event()
+        self.autoModeTimed = threading.Event()
+        self.autoModeTimeIntervalSec = 2.5  # default 2.5 seconds
         self.distPhoto = 5
         self.configAutoModeLock = threading.Lock()
+        self.configAutoModeTimedLock = threading.Lock()
 
         self.configOnOffLock = threading.Lock()
 
-
-
-        self.gps = gps.Gps(self,"/dev/ttyAMA0",baudrate=115200)
-        #self.gps = gps.Gps(self,"/dev/ttyAMA0",baudrate=9600)
+        self.gps_secondary = gps.Gps(self, "/dev/ttyAMA0", baudrate=115200, trackfull_path="track_full_secondary",debug=False)
+        self.gps = gps.Gps(self, self.config.get("MAIN_GPS_SERIAL"), baudrate=115200, trackfull_path="track_full_main",debug=False)
         self.lastLatLon = self.gps.getDegCoord()
+        self.lastLatLon_secondary = self.gps_secondary.getDegCoord()
 
         self.compas = compas.Compas(self)
         self.gopro = goPro.GoPro(self)
+        self.battery = battery.Battery(self)
 
         self.interfaces = Manager(self)
 
@@ -140,7 +148,6 @@ class OpenPathViewServer(threading.Thread):
         """
         gpio.output(26, gpio.LOW)
 
-
     def statut(self,succes,goProFailed="000000"):
         """
         act depending of the succes of photo taking
@@ -149,12 +156,23 @@ class OpenPathViewServer(threading.Thread):
         """
         rad = self.compas.getHeading()
         lat,lon = self.gps.getDegCoord()
+        lat_secondary, lon_secondary = self.gps_secondary.getDegCoord()
         alt = self.gps.getAltitude()
+        alt_secondary = self.gps_secondary.getAltitude()
+
+        os.system(
+            """echo "{}; {:f}; {:f}; {:f}; {}; {}" >> picturesInfo.csv""".format(time.asctime(), lat, lon, alt, rad,
+                                                                                 goProFailed))
+        os.system("""echo "{}; {:f}; {:f}; {:f}; {}; {}" >> picturesInfo_secondaryGPS.csv""".format(time.asctime(),
+                                                                                                    lat_secondary,
+                                                                                                    lon_secondary,
+                                                                                                    alt_secondary, rad,
+                                                                                                    goProFailed))
         if succes:
             self.interfaces.newPanorama(True,latitude=lat,longitude=lon,altitude=alt,heading=rad)
         else:
             self.interfaces.newPanorama(False,goProFailed = goProFailed)
-        os.system("""echo "%s; %f; %f; %s; %s; %s" >> picturesInfo.csv"""%(time.asctime(),lat,lon, alt, rad, goProFailed))
+
 
     def canMove(self):
         """
@@ -183,6 +201,23 @@ class OpenPathViewServer(threading.Thread):
         else:
             print(color.WARNING+"Error : autoMode already set"+color.ENDC)
 
+
+    def __automodeTimedThread(self):
+        """
+        Timed auto mode thread.
+        :return:
+        """
+        print(color.OKBLUE + "starting Timed Auto Mode" + color.ENDC)
+        if not self.autoModeTimed.isSet():
+            self.autoModeTimed.set()
+            while self.autoModeTimed.isSet() and self.keepAlive.isSet():
+                self.takePic()
+                time.sleep(self.autoModeTimeIntervalSec)
+
+            print(color.OKBLUE + "stoping Timed auto mode" + color.ENDC)
+        else:
+            print(color.WARNING + "Error : timed auto mode already set" + color.ENDC)
+
     def run(self):
         """
         control thread : display information and allow command in the same time
@@ -208,16 +243,33 @@ class OpenPathViewServer(threading.Thread):
             self.autoMode.clear()
         self.configAutoModeLock.release()
 
+
+    def setAutoTimed(self,intervalSec=None):
+        """
+        set auto mode parameters, None mean Off
+        """
+        self.configAutoModeTimedLock.acquire()
+        if intervalSec:
+            print("Setting timed auto mode for",intervalSec," seconds")
+            self.autoModeTimeIntervalSec = intervalSec
+            if not self.autoModeTimed.isSet():
+                automodeTimedThread = threading.Thread(target=self.__automodeTimedThread)
+                automodeTimedThread.daemon=True
+                automodeTimedThread.start()
+        else:
+            print("Disabling timed auto mode")
+            self.autoModeTimed.clear()
+        self.configAutoModeTimedLock.release()
+
     def socketHandler(self,socketSource,msg):
         """
         will be called by socket when they receiving a message
         """
 
-
         try:
             msg = json.loads(msg)
         except ValueError:
-            print(color.FAIL,"Error decoding json from socket",color.ENDC)
+            print(color.FAIL, "Error decoding json from socket", color.ENDC)
             return
 
         if "action" in msg:
@@ -244,6 +296,14 @@ class OpenPathViewServer(threading.Thread):
                         self.setAuto()
                 except KeyError:
                     print(color.FAIL,"Error : automode configuration fail",color.ENDC)
+            elif msg["set"]=="automodetimed":
+                try:
+                    if msg["intervalSec"]:
+                        self.setAutoTimed(float(msg["intervalSec"]))
+                    else:
+                        self.setAutoTimed()
+                except KeyError:
+                    print(color.FAIL,"Error : automode timed configuration fail",color.ENDC)
             else:
                 print(color.WARNING,"WARNING : no correct setting field found in socket json",color.ENDC)
 
@@ -253,7 +313,9 @@ class OpenPathViewServer(threading.Thread):
         """
         while self.keepAlive.isSet():
             lat,lon,alt,rad = self.getLatLonAltRad()
+            battery_volatge = self.battery.getBatteryVoltage()
             self.interfaces.setGeoInfo(lat,lon,alt,rad)
+            self.interfaces.setBatteryInfo(battery_volatge)
             time.sleep(0.05)
 
     def getLatLonAltRad(self):
@@ -276,6 +338,7 @@ class OpenPathViewServer(threading.Thread):
         """
         print(color.OKBLUE+"Stopping server...",color.ENDC)
         self.gps.stop()
+        self.gps_secondary.stop()
         self.gopro.stop()
         self.interfaces.stop()
         self.keepAlive.clear()
@@ -289,6 +352,7 @@ class OpenPathViewServer(threading.Thread):
         for interface in self.interfaces:
             interface.__del__()
         self.gps.__del__()
+        self.gps_secondary.__del__()
         self.gopro.__del__()
         print(color.WARNING+"Server destroyed",color.ENDC)
 

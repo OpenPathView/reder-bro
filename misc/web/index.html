@@ -44,17 +44,19 @@
                             <th>Longitude</th>
                             <th>Altitude</th>
                             <th>Heading</th>
+                            <th>Battery</th>
                         </tr>
                         <tr>
                             <td id="lat"></td>
                             <td id="lon"></td>
                             <td id="alt"></td>
                             <td id="rad"></td>
+                            <td id="battery"></td>
                         </tr>
                     </table>
 
                     <div id="settings">
-                        <p>Mode :
+                        <p>Mode dist :
                             <select class="form-control" id="mode" onchange="ws.setAutoMode()">
                                 <option value = "0">0ff</option>
                                 <option value = "1">1</option>
@@ -73,6 +75,11 @@
                                 <option value = "45">45</option>
                                 <option value = "50">50</option>
                             </select>
+                        </p>
+                        <p>Timed interval (empty field to unset) :
+                            <input type="text" value="2.5" id="intervalSec"> seconds
+                            <button class="btn btn-default" type="button" onclick="ws.setAutoModeTimed(qs('#intervalSec').value)">Enable</button>
+                            <button class="btn btn-default" type="button" onclick="ws.setAutoModeTimed(0)">Disable</button>
                         </p>
                     </div>
 
