@@ -8,6 +8,7 @@ class Compas:
         """Init all stuff."""
 
         self.opvServer = opvServer
+        self.lastHeading = 0
 
         if not self.opvServer.config.get("FAKE_MODE"):
             try:
@@ -29,7 +30,14 @@ class Compas:
         if self.opvServer.config.get("FAKE_MODE"):
             return b'404\xc2\xb042'.decode("utf-8")
         # return b'404\xc2\xb042'.decode("utf-8")
-        return self.__hmc5883l.getHeadingString()
+        try:
+            heading = self.__hmc5883l.getHeadingString()
+        except TypeError:
+            print("Compass type error on getHeading, trapping it and returning last value")
+            heading = self.lastHeading
+
+        self.lastHeading = heading
+        return heading
 
     def getDeclination(self):
         """

@@ -169,7 +169,7 @@ class Gps(object):
                         self.last_coord = self.getDegCoord()
 
                         try:
-                            os.system("""echo "%f; %f" >> %s"""%(self.last_coord[0],self.last_coord[1],self.track_path))
+                            os.system("""echo "%s; %f; %f" >> %s"""%(self.time,self.last_coord[0],self.last_coord[1],self.track_path))
                         except TypeError:
                             print("GPS type error.")
 
@@ -191,7 +191,7 @@ class Gps(object):
                         #if distance >= DIST_TRIGGER:
                         self.last_coord = self.getDegCoord()
                         try:
-                            os.system("""echo "%f; %f" >> %s"""%(self.last_coord[0],self.last_coord[1],self.track_path))
+                            os.system("""echo "%s; %f; %f" >> %s"""%(self.time,self.last_coord[0],self.last_coord[1],self.track_path))
                         except TypeError:
                             print("GPS type error.")
 
